@@ -16,7 +16,7 @@
 .dot.wait { background: var(--c); animation: blinkdot 1.2s ease-in-out infinite; }
 @keyframes blinkdot { 50% { opacity: 0.35; } }
 
-.live-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; padding-bottom: 90px; }
+.live-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .col-main, .col-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 @media (max-width: 1080px) { .live-grid { grid-template-columns: minmax(0, 1fr); } }
 
@@ -215,3 +215,55 @@
 
 .live-page .foot { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .btn.is-busy::before, .waiting::before, .tl li.now::before, .dot.wait { animation: none; } }
+
+/* ---------------------------------------------------------------- layout v2 */
+.paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 28px; max-width: 900px; }
+.path { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 16px 52px 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.02); color: var(--ink-2); text-decoration: none; transition: border-color .2s, background .2s; }
+.path:hover, .path:focus-visible { border-color: rgba(217, 180, 90, 0.5); background: rgba(217, 180, 90, 0.05); }
+.path-k { font: 500 11px/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--gold, #d9b45a); }
+.path b { font-weight: 500; font-size: 16px; color: var(--ink); }
+.path span:last-of-type { font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
+.path svg { position: absolute; right: 18px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--gold, #d9b45a); }
+
+.live-section { padding-block: 44px 8px; scroll-margin-top: var(--nav-h); }
+.live-section:last-of-type { padding-bottom: 90px; }
+.section-head { margin-bottom: 18px; }
+.section-head h2 { font: 400 clamp(2rem, 3.2vw, 2.6rem)/1.05 var(--serif); letter-spacing: -0.01em; margin-top: 8px; }
+
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 0 0 20px; padding: 0; list-style: none; }
+.steps a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); color: var(--ink-3); font-size: 13.5px; text-decoration: none; background: rgba(255, 255, 255, 0.015); }
+.steps a span { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-2); font: 500 11.5px/1 var(--mono); }
+.steps li.is-done a { color: var(--ink-2); }
+.steps li.is-done a span { background: rgba(63, 178, 127, 0.16); border-color: rgba(63, 178, 127, 0.55); color: #6fd3a3; font-size: 0; }
+.steps li.is-done a span::before { content: "✓"; font-size: 12px; }
+.steps li.is-now a { color: var(--ink); border-color: rgba(217, 180, 90, 0.5); background: rgba(217, 180, 90, 0.06); }
+.steps li.is-now a span { border-color: var(--gold, #d9b45a); color: var(--gold, #d9b45a); }
+.steps li.is-locked a { opacity: .55; }
+
+.col-side { position: sticky; top: calc(var(--nav-h) + 16px); }
+.activity-card .events { max-height: calc(100vh - var(--nav-h) - 210px); min-height: 260px; }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: #3fb27f; box-shadow: 0 0 0 4px rgba(63, 178, 127, 0.18); flex: none; margin-inline: 6px; }
+
+.sell-card .lcard-note { max-width: 860px; }
+.sell-card .personas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.sell-card .pick { height: 100%; }
+.sell-card .sell-go { margin-top: 16px; }
+.sell-card .launches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.sell-card .launches:empty { display: none; }
+
+.terminal-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 28px; align-items: start; }
+.terminal-text h2 { font: 400 2rem/1.05 var(--serif); margin: 8px 0 12px; }
+.terminal-card .cli { margin: 0; }
+
+@media (max-width: 1180px) { .sell-card .personas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1080px) {
+  .col-side { position: static; }
+  .activity-card .events { max-height: 420px; }
+  .terminal-card { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .paths { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .steps a { flex-direction: column; gap: 6px; padding: 8px 4px; font-size: 11px; text-align: center; }
+  .sell-card .personas, .sell-card .launches { grid-template-columns: minmax(0, 1fr); }
+}

@@ -434,7 +434,12 @@ async function setActive(id) {
   ls.set("active", S.active);
   $("#chat").hidden = false;
   $("#bill").hidden = false;
-  await refreshOrder();
+  // RPC nodes can lag the transaction by a block or two; wait until the order is visible.
+  S.order = null;
+  for (let i = 0; i < 10 && !S.order; i++) {
+    await refreshOrder().catch(() => {});
+    if (!S.order) await new Promise((r) => setTimeout(r, 1000));
+  }
   renderConvo();
   focusCard("#chat");
 }
@@ -508,8 +513,11 @@ function renderConvo() {
 async function sendPrompt(prompt) {
   if (S.sending || !S.active || !prompt.trim()) return;
   const id = S.active;
+  if (!S.order || String(S.order.id) !== id) await refreshOrder().catch(() => {});
   const o = S.order;
+  if (!o) return toast("The order is not visible on NEAR RPC yet. Try again in a few seconds.", "info");
   const l = listing(o.listing_id);
+  if (!l) return toast("Still loading this order's listing. Try again in a few seconds.", "info");
   const rec = orders()[id];
   if (!rec) return toast("This browser doesn't hold the key for this order.", "bad");
   if (location.protocol === "https:" && /^http:/.test(l.endpoint)) return toast(`This seller's endpoint (${esc(l.endpoint)}) is plain HTTP, which an HTTPS page cannot call.`, "bad");
@@ -838,6 +846,34 @@ async function boot() {
   every(5000, async () => { if (S.active && S.order?.status !== "Closed") await refreshOrder(); });
   every(3000, async () => { if (S.offer) await pollOffer(); });
 }
+
+// Progress strip: which buyer steps are done, which is next.
+function renderSteps() {
+  const items = $$("[data-steps] li");
+  if (!items.length) return;
+  const funded = !!S.wallet && typeof S.balance === "bigint" && S.balance > 0n;
+  const done = [
+    funded,
+    S.selected != null || !!S.active,
+    !!S.active,
+    !!S.active && receipts(S.active).length > 0,
+    !!S.active && (S.claims.length > 0 || S.order?.status === "Closed"),
+  ];
+  const now = done.indexOf(false);
+  items.forEach((li, i) => {
+    li.classList.toggle("is-done", done[i]);
+    li.classList.toggle("is-now", i === now);
+    const target = $(li.querySelector("a").getAttribute("href"));
+    li.classList.toggle("is-locked", !!target?.hidden);
+  });
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-steps] a");
+  if (!a) return;
+  const el = $(a.getAttribute("href"));
+  if (el?.hidden) { e.preventDefault(); toast("Finish the step before this one first.", "info"); }
+});
+setInterval(() => { try { renderSteps(); } catch {} }, 800);
 
 boot().catch((e) => {
   console.error(e);
