@@ -61,7 +61,8 @@ The three F listings were suspended. Buying from them was refused (`listing grad
 
 1. `cd node && npm install && npm test`: 19 tests (fingerprint rules, tiers, receipts, request signatures, EIP-191 recovery of a real NEAR AI signature, price math).
 2. `cd contract && cargo test`: 24 tests of the market rules (grading gates, spot, tab ceilings, bargaining limits, disputes and slashing, refunds, unpaid probe usage on F listings).
-3. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080. The page reads the testnet contract straight from NEAR RPC. Click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain.
+3. `cd node && TS_CONTRACT=market.credster-68480.testnet node src/cli.js verify-reports`: reads all 12 grades from the testnet contract and checks that each report file in `web/reports/` hashes to the `report_hash` on chain.
+4. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080. The page reads the testnet contract straight from NEAR RPC. Click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain.
 
 ![A grade F report for the inflate seller: the report hash matches the chain, observed token counts 95, 85, 100 against the reference 70, 63, 74, scaled by 1.353](assets/report-F.png)
 
