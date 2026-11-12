@@ -57,6 +57,17 @@ The three F listings were suspended. Buying from them was refused (`listing grad
 
 ## Try it
 
+### Live, in the browser (3 minutes)
+
+Open the live server's `live.html`; [JUDGING.md](JUDGING.md) has the URL and a walkthrough. The page creates a throwaway testnet account in your browser and funds it from a faucet. Then you can:
+
+- buy from a graded seller (spot, pay-as-you-go tab, or bargaining with the seller's agent) and chat with it;
+- check each answer's node-signed receipt in the browser against the request and response bytes;
+- buy from the overclaiming seller, watch your page dispute its inflated claim, and get part of its bond;
+- launch a cheating seller and watch the grader fail it within a minute.
+
+The same live market works from the CLI (`node src/cli.js help`), including selling with your own NEAR AI Cloud key. `scripts/go-live.mjs` and `node src/cli.js live` run the server; see [JUDGING.md](JUDGING.md#running-the-live-server).
+
 ### Without any key (2 minutes)
 
 1. `cd node && npm install && npm test`: 19 tests (fingerprint rules, tiers, receipts, request signatures, EIP-191 recovery of a real NEAR AI signature, price math).
@@ -154,6 +165,9 @@ sequenceDiagram
 | `node/src/grader.js` | grading engine and dispute resolution |
 | `node/src/buyer.js` | buyer client: orders, signed calls, receipt audit, disputes |
 | `node/src/agents.js` | bargaining and pricing agents |
+| `node/src/live.js`, `node/src/keeper.js` | live server: website, hosted seller nodes, faucet, seller launches; keeper for grading, settlement and disputes |
+| `web/live.html`, `web/site/js/live.js`, `web/site/js/near-lite.js` | in-browser trading: throwaway account, signed requests, receipt checks, disputes |
+| `scripts/go-live.mjs`, `Dockerfile`, `JUDGING.md` | set up and run the live market; guide for judges |
 | `node/fingerprints.json` | reference token counts measured from NEAR AI Cloud |
 | `web/index.html`, `web/site/` | landing page: the testnet run, live stats and in-browser report verification |
 | `web/market.html` | static dashboard of listings, offers, orders and claims |
@@ -163,7 +177,7 @@ sequenceDiagram
 
 ## Disclosures
 
-- **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, Playwright (screenshots only). The landing page vendors GSAP 3.15 with ScrollTrigger and SplitText (GSAP standard no-charge license), Lenis 1.3 (MIT) and the fonts Instrument Serif, Inter Tight and JetBrains Mono (SIL OFL) in `web/site/`.
+- **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, Playwright (screenshots only). The landing page vendors GSAP 3.15 with ScrollTrigger and SplitText (GSAP standard no-charge license), Lenis 1.3 (MIT), @noble/ed25519 3.2 (MIT, for in-browser signing) and the fonts Instrument Serif, Inter Tight and JetBrains Mono (SIL OFL) in `web/site/`.
 - **AI assistance:** the code and docs were written with an AI coding agent, directed and reviewed by the author.
 - **Generated media:** the landing page's photographs were made with Gemini 3 Pro Image and GPT Image 2.5, and its video loops with Kling 3.0 image-to-video, all through GMI Cloud. They are illustrations; every number on the page comes from the testnet run or from live RPC.
 
