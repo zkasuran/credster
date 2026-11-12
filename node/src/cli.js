@@ -229,9 +229,10 @@ const commands = {
     const { Buyer } = await import("./buyer.js");
     const order = await view("get_order", { order_id: String(need("order")) });
     const listing = await view("get_listing", { listing_id: order.listing_id });
-    const r = await new Buyer(need("buyer")).chat(need("order"), { model: listing.model, messages: [{ role: "user", content: need("prompt") }], max_tokens: Number(a["max-tokens"] || 1024), ...briefFor(listing.model) }, { endpoint: a.endpoint });
+    const r = await new Buyer(need("buyer")).chat(need("order"), { model: listing.model, messages: [{ role: "user", content: need("prompt") }], max_tokens: Number(a["max-tokens"] || 1024), ...briefFor(listing.model) }, { endpoint: a.endpoint, tee: true });
     if (!r.ok) throw new Error(`${r.status} ${r.error}`);
     console.log(r.json.choices[0].message.content);
+    if (r.tee) console.error(r.tee.verdict === "verified" ? `TEE: answered by ${r.tee.signedModel} (enclave signer ${r.tee.signer})` : r.tee.verdict === "none" ? "TEE: no TEE signatures for this model" : `TEE ${r.tee.verdict}: ${r.tee.reason}`);
     console.error(`receipt ${r.receiptOk ? "verified" : "INVALID"}: ${r.receipt.in} in / ${r.receipt.out} out, ${r.ms} ms`);
   },
 

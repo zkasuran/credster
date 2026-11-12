@@ -245,7 +245,7 @@
 .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #3fb27f; box-shadow: 0 0 0 4px rgba(63, 178, 127, 0.18); flex: none; margin-inline: 6px; }
 
 .sell-card .lcard-note { max-width: 860px; }
-.sell-card .personas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.sell-card .personas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .sell-card .pick { height: 100%; }
 .sell-card .sell-go { margin-top: 16px; }
 .sell-card .launches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
@@ -284,3 +284,5 @@
 @media (max-width: 760px) { .how-sell { grid-template-columns: minmax(0, 1fr); } }
 
 .msg-a .text.is-empty { color: var(--ink-3); font-style: italic; font-size: 14px; }
+.receipt .wait { color: var(--c); }
+.receipt .na { color: var(--ink-3); }

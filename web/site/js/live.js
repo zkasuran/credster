@@ -2,6 +2,7 @@
 // Talks to NEAR RPC directly (near-lite.js), to seller nodes directly (signed
 // requests, verified receipts), and to the live server only for the faucet,
 // seller launches and the keeper's activity feed.
+import { checkAnswer } from "./tee.js";
 import { Near, Signer, Key, utf8, fromUtf8, toB64, fromB64, sha256hex, verifyEd25519, parseNear, formatNear, TESTNET_RPCS } from "./near-lite.js";
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -517,7 +518,7 @@ function renderConvo() {
     const ok = (b, t) => `<span class="${b ? "ok" : "bad"}">${b ? "✓" : "✗"} ${esc(t)}</span>`;
     return `<li class="msg-a"><div class="text${m.empty ? " is-empty" : ""}">${esc(m.content)}</div>
       ${r ? `<div class="receipt"><span>receipt #${esc(r.seq)} · ${esc(r.in)} in / ${esc(r.out)} out · ${esc(m.ms)} ms</span>
-        ${ok(c.sig, "signed by the node key on chain")}${ok(c.req, "request hash")}${ok(c.resp, "response hash")}
+        ${ok(c.sig, "signed by the node key on chain")}${ok(c.req, "request hash")}${ok(c.resp, "response hash")}${teeLine(m.tee)}
         <details><summary>receipt text</summary><pre>${esc(m.text)}</pre></details></div>` : `<div class="receipt"><span class="bad">✗ no receipt came with this answer</span></div>`}
     </li>`;
   }).join("");
@@ -570,15 +571,26 @@ async function sendPrompt(prompt) {
       if (rt && rs) {
         const text = fromUtf8(fromB64(rt));
         const receipt = JSON.parse(text);
+        const respHash = await sha256hex(raw);
         const checks = {
           sig: await verifyEd25519(l.node_key, utf8(text), fromB64(rs)),
           req: receipt.req === reqHash,
-          resp: receipt.resp === (await sha256hex(raw)),
+          resp: receipt.resp === respHash,
           order: String(receipt.order) === id && String(receipt.listing) === String(l.id),
         };
         const ok = checks.sig && checks.req && checks.resp && checks.order;
         ls.set(`receipts:${id}`, [...receipts(id), { text, sig: rs, ok, in: receipt.in, out: receipt.out, seq: receipt.seq }]);
-        entry = { role: "assistant", content, receipt, text, checks, ms, empty: !said };
+        entry = { role: "assistant", content, receipt, text, checks, ms, empty: !said, tee: { verdict: "checking" } };
+        // Check which model really answered, from NEAR AI's TEE signature, without waiting on it.
+        checkAnswer(l.endpoint, { chatId: receipt.chat_id, model: l.model, reqHash, respHash })
+          .catch((e) => ({ verdict: "unsigned", reason: e.message }))
+          .then((tee) => {
+            const log2 = convo(id);
+            const m = log2.find((x) => x.receipt?.seq === receipt.seq);
+            if (m) { m.tee = tee; ls.set(`chat:${id}`, log2); }
+            ls.set(`receipts:${id}`, receipts(id).map((r) => (r.seq === receipt.seq ? { ...r, tee: tee.verdict, teeReason: tee.reason } : r)));
+            if (S.active === id) { renderConvo(); autoDispute().then(renderBill); }
+          });
       } else entry = { role: "assistant", content, ms, empty: !said };
     }
   } catch (e) {
@@ -593,16 +605,27 @@ async function sendPrompt(prompt) {
   renderBill();
 }
 
+function teeLine(t) {
+  if (!t) return "";
+  if (t.verdict === "checking") return `<span class="wait">… checking which model answered</span>`;
+  if (t.verdict === "verified") return `<span class="ok" title="NEAR AI enclave signer ${esc(t.signer)}">✓ TEE: answered by ${esc(modelShort(t.signedModel))}</span>`;
+  if (t.verdict === "none") return `<span class="na">– no TEE signatures for this model</span>`;
+  return `<span class="bad">✗ TEE: ${esc(t.reason)}</span>`;
+}
+
 // ------------------------------------------------------------------ bill
 function audit() {
   const rs = receipts(S.active).filter((r) => r.ok);
+  const caught = rs.find((r) => r.tee === "contradicts" || r.tee === "altered");
   const haveIn = rs.reduce((s, r) => s + r.in, 0), haveOut = rs.reduce((s, r) => s + r.out, 0);
   let accIn = 0, accOut = 0;
   const bad = [];
   for (const c of S.claims.filter((x) => x.status !== "Rejected")) {
     accIn += Number(c.in_tokens);
     accOut += Number(c.out_tokens);
-    if ((accIn > haveIn || accOut > haveOut) && c.status === "Pending") bad.push({ c, reason: `claims total ${accIn} in / ${accOut} out; my signed receipts cover ${haveIn} in / ${haveOut} out` });
+    if (c.status !== "Pending") continue;
+    if (accIn > haveIn || accOut > haveOut) bad.push({ c, reason: `claims total ${accIn} in / ${accOut} out; my signed receipts cover ${haveIn} in / ${haveOut} out` });
+    else if (caught) bad.push({ c, reason: `TEE check on answer #${caught.seq}: ${caught.teeReason}` });
   }
   return { n: rs.length, haveIn, haveOut, accIn, accOut, bad };
 }
@@ -619,7 +642,7 @@ async function autoDispute() {
     try {
       const r = await S.wallet.signer.call("dispute_claim", { claim_id: String(b.c.id), reason: b.reason.slice(0, 280) });
       ls.set(`disputed:${S.active}`, { ...disputed(S.active), [b.c.id]: { at: Date.now(), tx: r.txHash } });
-      toast(`Overclaim caught. You disputed claim ${esc(b.c.id)}: ${esc(b.reason)} ${txLink(r.txHash)}`, "ok");
+      toast(`${b.reason.startsWith("TEE") ? "Wrong model caught" : "Overclaim caught"}. You disputed claim ${esc(b.c.id)}: ${esc(b.reason)} ${txLink(r.txHash)}`, "ok");
     } catch (e) {
       const d2 = disputed(S.active);
       delete d2[b.c.id];

@@ -10,6 +10,7 @@ import { view, viewAll, call, near, fmtNear } from "./near.js";
 import { sha256hex, recoverEip191, verifyReceipt, receiptsHash } from "./sign.js";
 import { FINGERPRINT_PROBES, fingerprintRequest, capabilityTasks, capabilityRequest } from "./probes.js";
 import { Buyer } from "./buyer.js";
+import { teeCapable, checkAnswer } from "./tee.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const FINGERPRINTS = join(HERE, "..", "fingerprints.json");
@@ -51,6 +52,34 @@ export async function buildFingerprints(models, key) {
   refs.probes_sha256 = sha256hex(JSON.stringify(FINGERPRINT_PROBES));
   writeFileSync(FINGERPRINTS, JSON.stringify(refs, null, 2) + "\n");
   return refs;
+}
+
+// Live references: the provider can redeploy a model with a different chat template,
+// which shifts prompt token counts (seen on 12 Nov 2026: Qwen3.8-27B probe 3 went from
+// 110 to 109). So the grader measures the claimed model's reference at the provider
+// during each grade, cached for 30 minutes, and falls back to fingerprints.json.
+const liveRefs = new Map(); // model -> { at, counts }
+const providerKey = () => process.env.TS_PROVIDER_KEY || process.env.NEARAI_API_KEY || process.env.TS_UPSTREAM_KEY || "";
+
+export async function liveReference(model) {
+  const hit = liveRefs.get(model);
+  if (hit && Date.now() - hit.at < 30 * 60_000) return hit;
+  const key = providerKey();
+  if (!key) return null;
+  try {
+    const runs = [];
+    for (let run = 0; run < 2; run++) {
+      const counts = [];
+      for (let i = 0; i < FINGERPRINT_PROBES.length; i++) counts.push((await providerChat(key, fingerprintRequest(model, i))).usage.prompt_tokens);
+      runs.push(counts);
+    }
+    if (JSON.stringify(runs[0]) !== JSON.stringify(runs[1])) return null; // not stable right now
+    const ref = { at: Date.now(), counts: runs[0], measured_at: new Date().toISOString(), source: PROVIDER };
+    liveRefs.set(model, ref);
+    return ref;
+  } catch {
+    return null;
+  }
 }
 
 /** Which reference model the observed counts match, if any. */
@@ -169,21 +198,38 @@ export function decideTier({ fingerprint, attestation, capabilityPct, errorPct }
  * Grades one listing end to end. `opts.post` posts the grade on chain.
  * Returns { report, hash, file, tx }.
  */
-export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), log = console.log } = {}) {
+/**
+ * A fresh implicit account the grader funds for one mystery-shopper visit, so a
+ * re-grade arrives as an ordinary customer order: not a trial order and not the
+ * grader's own account. The funding transfer is still visible on chain.
+ */
+export async function newShopper(grader, amount = near("0.12")) {
+  const { newKeyPair, saveKey, transfer } = await import("./near.js");
+  const { baseDecode } = await import("near-api-js");
+  const kp = newKeyPair();
+  const id = Buffer.from(baseDecode(kp.getPublicKey().toString().split(":")[1])).toString("hex");
+  saveKey(id, kp);
+  const r = await transfer(grader, id, amount);
+  return { id, tx: r.txHash };
+}
+
+export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), shopper = null, log = console.log } = {}) {
   const refs = loadRefs();
   const listing = await view("get_listing", { listing_id: String(listingId) });
   if (!listing) throw new Error(`no listing ${listingId}`);
-  const buyer = new Buyer(grader);
-  log(`grading listing ${listingId}: ${listing.model} at ${listing.endpoint} (seller ${listing.seller})`);
+  const buyer = new Buyer(shopper || grader);
+  log(`grading listing ${listingId}: ${listing.model} at ${listing.endpoint} (seller ${listing.seller})${shopper ? `, as mystery shopper ${shopper.slice(0, 8)}…` : ""}`);
 
-  // 1. A trial order, bought like any other buyer.
+  // 1. An order bought like any other buyer: a trial order on an ungraded
+  //    listing, or an ordinary spot order from a mystery shopper on a graded one.
   const { value: orderId, txHash: orderTx } = await buyer.buySpot(listingId, trialDeposit);
-  log(`  trial order ${orderId} (${fmtNear(trialDeposit)} NEAR) tx ${orderTx}`);
+  log(`  ${shopper ? "mystery-shopper" : "trial"} order ${orderId} (${fmtNear(trialDeposit)} NEAR) tx ${orderTx}`);
 
   const calls = [];
   const run = async (kind, body) => {
     try {
-      const r = await buyer.chat(orderId, body, { endpoint: listing.endpoint, nodeKey: listing.node_key });
+      // A mystery shopper checks every answer's TEE signature, as a careful buyer would.
+      const r = await buyer.chat(orderId, body, { endpoint: listing.endpoint, nodeKey: listing.node_key, tee: !!shopper });
       calls.push({ kind, ok: r.ok, status: r.status, ms: r.ms, usage: r.json?.usage, receiptOk: r.receiptOk });
       return r;
     } catch (e) {
@@ -196,8 +242,21 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
   const fp = [];
   for (let i = 0; i < FINGERPRINT_PROBES.length; i++) fp.push(await run("fingerprint", fingerprintRequest(listing.model, i)));
   const observed = fp.map((r) => r.json?.usage?.prompt_tokens ?? null);
-  const reference = refs.models[listing.model]?.stable ? refs.models[listing.model].counts : null;
-  const fingerprint = { observed, reference, ...compareFingerprint(observed, reference), looks_like: identify(observed, refs) };
+  const stored = refs.models[listing.model]?.stable ? refs.models[listing.model].counts : null;
+  const live = await liveReference(listing.model);
+  const reference = live?.counts || stored;
+  // "looks like" compares against live references of the same provider family when available.
+  const family = String(listing.model).split("/")[0];
+  for (const m of Object.keys(refs.models).filter((m) => m.split("/")[0] === family && m !== listing.model)) {
+    const lr = observed.every((x) => typeof x === "number") && JSON.stringify(observed) !== JSON.stringify(reference) ? await liveReference(m) : null;
+    if (lr) refs.models[m] = { ...refs.models[m], counts: lr.counts, stable: true };
+  }
+  if (live) refs.models[listing.model] = { ...refs.models[listing.model], counts: live.counts, stable: true };
+  const fingerprint = {
+    observed, reference, ...compareFingerprint(observed, reference), looks_like: identify(observed, refs),
+    reference_source: live ? `measured at ${PROVIDER} during this grade (${live.measured_at})` : "fingerprints.json",
+    ...(live && stored && JSON.stringify(stored) !== JSON.stringify(live.counts) ? { stored_reference: stored } : {}),
+  };
   log(`  fingerprint observed ${JSON.stringify(observed)} reference ${JSON.stringify(reference)} -> ${fingerprint.verdict}${fingerprint.looks_like.length ? " (matches " + fingerprint.looks_like.join(", ") + ")" : ""}`);
 
   // 3. Fresh checkable tasks.
@@ -232,7 +291,7 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     grader,
     contract: process.env.TS_CONTRACT,
     listing: { id: String(listingId), seller: listing.seller, model: listing.model, endpoint: listing.endpoint, node_key: listing.node_key, ask_in: listing.ask_in, ask_out: listing.ask_out },
-    trial_order: { id: String(orderId), tx: orderTx },
+    trial_order: { id: String(orderId), tx: orderTx, buyer: shopper || grader, mystery_shopper: !!shopper },
     fingerprint,
     probes_sha256: sha256hex(JSON.stringify(FINGERPRINT_PROBES)),
     capability: { seed, pct: capabilityPct, tasks: capability },
@@ -299,6 +358,17 @@ export async function resolveDisputes({ grader, slashFactor = 2n, minSlash = 10n
       const sumsOk = sumIn === Number(c.in_tokens) && sumOut === Number(c.out_tokens) && rs.length === c.receipts;
       checks.push(`signatures ${sigsOk ? "valid" : "INVALID"}`, `receipts ${forOrder ? "belong to this order" : "NOT for this order"}`, `hash ${hashOk ? "matches" : "DOES NOT match"}`, `receipts sum ${sumIn} in / ${sumOut} out vs claim ${c.in_tokens} / ${c.out_tokens}`);
       uphold = sigsOk && forOrder && hashOk && sumsOk;
+      // For a model NEAR AI serves in a TEE, every receipt's answer must carry the
+      // provider's signature for the claimed model over exactly those bytes.
+      if (uphold && (await teeCapable(listing.model))) {
+        let bad = null;
+        for (const r of rs.slice(0, 40)) {
+          const v = await checkAnswer(listing.endpoint, { chatId: r.chat_id, model: listing.model, reqHash: r.req, respHash: r.resp });
+          if (v.verdict !== "verified") { bad = { seq: r.seq, ...v }; break; }
+        }
+        checks.push(bad ? `TEE check on answer #${bad.seq}: ${bad.verdict}, ${bad.reason}` : `TEE signatures verified for all ${Math.min(rs.length, 40)} answers`);
+        if (bad) uphold = false;
+      }
     }
     // Twice the claim, at least 0.01 NEAR; the contract caps it at the bond.
     const want = BigInt(c.amount) * slashFactor;
@@ -311,3 +381,48 @@ export async function resolveDisputes({ grader, slashFactor = 2n, minSlash = 10n
   return out;
 }
 
+
+/**
+ * After a mystery-shopper visit, compares the seller's claims on that order with
+ * the receipts the shopper holds. Disputes any overclaim; returns what it did.
+ */
+export async function auditShop({ shopper, orderId, log = console.log }) {
+  const b = new Buyer(shopper);
+  const a = await b.audit(orderId);
+  const out = [];
+  for (const x of a.bad) {
+    const r = await b.dispute(x.claim.id, x.reason);
+    log(`  mystery shopper disputes claim ${x.claim.id}: ${x.reason} tx ${r.txHash}`);
+    out.push({ claim: x.claim.id, reason: x.reason, tx: r.txHash });
+  }
+  return { ...a, disputed: out };
+}
+
+/**
+ * Suspends a listing whose seller overclaimed a mystery shopper. The report is the
+ * shopper visit's grade report with the claim audit added and the tier set to F.
+ */
+export async function postAuditGrade({ grader, listingId, claim, base }) {
+  const listing = await view("get_listing", { listing_id: String(listingId) });
+  if (!listing || listing.status === "Suspended" || listing.status === "Closed") return { skipped: true };
+  const prev = JSON.parse(readFileSync(join(REPORTS, base), "utf8"));
+  const reason = `billed a mystery shopper ${claim.in_tokens} in / ${claim.out_tokens} out in claim ${claim.id}, more than its own receipts cover; the dispute was rejected`;
+  const report = {
+    ...prev,
+    graded_at: new Date().toISOString(),
+    claims_audit: { claim: claim.id, order: claim.order_id, in_tokens: claim.in_tokens, out_tokens: claim.out_tokens, status: claim.status, resolution: claim.resolution, slashed: claim.slashed },
+    decision: { ...prev.decision, tier: "F", score: Math.min(prev.decision.score, 20), meteringOk: false, reasons: [...prev.decision.reasons, reason] },
+  };
+  const text = JSON.stringify(report, null, 2) + "\n";
+  const hash = sha256hex(text);
+  const fileName = `listing-${listingId}-${Date.now()}-audit.json`;
+  writeFileSync(join(REPORTS, fileName), text);
+  const g = listing.grade || {};
+  const r = await call(grader, "post_grade", {
+    listing_id: String(listingId), tier: "F", score: report.decision.score,
+    fingerprint_ok: !!g.fingerprint_ok, metering_ok: false, attested: !!g.attested,
+    capability_pct: g.capability_pct ?? 0, p50_latency_ms: g.p50_latency_ms ?? 0, error_pct: g.error_pct ?? 0,
+    report_hash: hash, report_url: `${REPORT_BASE}/${fileName}`,
+  });
+  return { tx: r.txHash, file: fileName, hash };
+}

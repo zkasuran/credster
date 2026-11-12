@@ -7,11 +7,15 @@
 //   offers.
 // - Grade lane: grades new listings and re-grades listings before their grade
 //   goes stale, one at a time, with backoff for endpoints that do not answer.
+//   Graded listings also get unannounced mystery-shopper re-grades from a fresh
+//   account, and the shopper's bill is audited afterwards; a listing that
+//   overclaims a shopper is suspended.
 //
 // Everything it does is an ordinary contract call that anyone (or the grader,
 // for grades and disputes) could make; the keeper only saves the typing.
 import { view, viewAll, call, balance, near, fmtNear } from "./near.js";
-import { gradeListing, resolveDisputes } from "./grader.js";
+import { gradeListing, resolveDisputes, newShopper, auditShop, postAuditGrade } from "./grader.js";
+import { deleteAccount, forgetKey } from "./near.js";
 import { SellerAgent } from "./agents.js";
 
 const NS_PER_MS = 1_000_000n;
@@ -37,6 +41,9 @@ export function createKeeper({
   settleEverySec = Number(process.env.TS_KEEPER_SETTLE_EVERY || 8),
   gradeEverySec = Number(process.env.TS_KEEPER_GRADE_EVERY || 15),
   regradeMarginSec = 2 * 3600,
+  // Mystery-shopper re-grades of graded listings, at a random time inside this window after the last grade.
+  mysteryMinSec = Number(process.env.TS_MYSTERY_MIN_SEC || 2 * 3600),
+  mysteryMaxSec = Number(process.env.TS_MYSTERY_MAX_SEC || 4 * 3600),
   maxGradesPerDay = 300,
   gradeTimeoutMs = 10 * 60_000,
   log = console.log,
@@ -55,6 +62,14 @@ export function createKeeper({
   const attempts = new Map(); // listing id -> { fails, nextAt, why }
   const busy = new Set(); // "claim:1", "order:2", "offer:3": one action in flight per item
   const wanted = []; // listing ids to grade before anything else
+  const shops = []; // { shopper, orderId, listingId, until, disputed: Set }
+  // A stable random delay per (listing, grade time), so the next visit can't be predicted from the last.
+  const mysteryDue = (l) => {
+    const t = Number(BigInt(l.grade.graded_at) / NS_PER_MS);
+    let h = 2166136261;
+    for (const ch of `${l.id}:${l.grade.graded_at}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+    return t + (mysteryMinSec + (h % 1000) / 1000 * (mysteryMaxSec - mysteryMinSec)) * 1000;
+  };
   let cfg, cfgAt = 0, day = { key: "", grades: 0 }, grading = null, stopped = false, kick = () => {}, lowFundsAt = 0;
   const stats = { settleTicks: 0, gradeTicks: 0, lastSettleAt: 0, lastError: null };
 
@@ -156,6 +171,35 @@ export function createKeeper({
         } catch (e) { log(`[keeper] seller agent on offer ${of.id}: ${e.message.slice(0, 160)}`); return false; }
       });
     }
+    // Mystery-shopper bills: the seller claims within seconds; the shopper audits
+    // each claim against its own receipts before the challenge window closes.
+    for (const s of [...shops]) {
+      if (Date.now() > s.until) {
+        const o = await view("get_order", { order_id: s.orderId }).catch(() => null);
+        if (o?.status === "Closed" || Date.now() > s.until + 30 * 60_000) {
+          shops.splice(shops.indexOf(s), 1);
+          // Sweep what is left back to the grader and drop the throwaway key.
+          await deleteAccount(s.shopper, grader).then(() => forgetKey(s.shopper)).catch((e) => log(`[keeper] sweep shopper: ${e.message.slice(0, 120)}`));
+        }
+        continue;
+      }
+      await once(`shop:${s.orderId}`, async () => {
+        const a = await auditShop({ shopper: s.shopper, orderId: s.orderId, log: () => {} });
+        for (const d of a.disputed) {
+          s.disputed.add(String(d.claim));
+          emit("dispute", `mystery shopper disputed claim ${d.claim} on listing ${s.listingId}: ${d.reason}`, { claim: String(d.claim), listing: s.listingId, tx: d.tx });
+        }
+        // Once a shopper's dispute is rejected, the listing is suspended with a report.
+        for (const cid of s.disputed) {
+          const cl = await view("get_claim", { claim_id: cid });
+          if (cl?.status !== "Rejected" || s.suspended) continue;
+          const r = await postAuditGrade({ grader, listingId: s.listingId, claim: cl, base: s.report });
+          s.suspended = true;
+          listingsCache.at = 0;
+          emit("graded", `listing ${s.listingId} graded F and suspended: it billed a mystery shopper for more tokens than it served (claim ${cid})`, { listing: s.listingId, tier: "F", tx: r.tx, report: r.file, hash: r.hash });
+        }
+      });
+    }
     stats.settleTicks++;
     stats.lastSettleAt = Date.now();
   }
@@ -166,7 +210,7 @@ export function createKeeper({
     const listings = await allListings(wanted.length ? 3_000 : 15_000);
     const now = Date.now();
     const staleAt = (l) => Number(BigInt(l.grade.graded_at) / NS_PER_MS) + c.max_grade_age_sec * 1000;
-    const due = listings.filter((l) => l.status === "Active" && (!l.grade || staleAt(l) - regradeMarginSec * 1000 <= now));
+    const due = listings.filter((l) => l.status === "Active" && (!l.grade || staleAt(l) - regradeMarginSec * 1000 <= now || (l.grade.tier !== "F" && mysteryDue(l) <= now)));
     const ready = due.filter((l) => (attempts.get(String(l.id))?.nextAt || 0) <= now);
     const first = wanted.map((id) => ready.find((l) => String(l.id) === id)).find(Boolean);
     if (first) return first;
@@ -207,11 +251,16 @@ export function createKeeper({
       return;
     }
     if (!/^https?:\/\//.test(l.endpoint) || !(await reachable(l.endpoint))) return backoff(id, `endpoint ${l.endpoint} does not answer`);
-    grading = { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines: [] };
-    emit("grading", `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
+    // A graded listing gets a mystery shopper: an ordinary order from a fresh account.
+    let shopper = null;
+    if (l.grade) {
+      try { shopper = (await newShopper(grader)).id; } catch (e) { return backoff(id, `could not fund a mystery shopper: ${e.message.slice(0, 80)}`); }
+    }
+    grading = { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines: [], mystery: !!shopper };
+    emit("grading", shopper ? `mystery-shopper re-grade of listing ${id} (${l.model}) from a fresh account` : `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
     try {
       const r = await Promise.race([
-        gradeListing(id, { grader, log: (line) => { grading.lines.push(String(line).trim()); if (grading.lines.length > 40) grading.lines.shift(); } }),
+        gradeListing(id, { grader, shopper, log: (line) => { grading.lines.push(String(line).trim()); if (grading.lines.length > 40) grading.lines.shift(); } }),
         sleep(gradeTimeoutMs).then(() => { throw new Error("grading timed out"); }),
       ]);
       day.grades++;
@@ -220,6 +269,7 @@ export function createKeeper({
       const idx = wanted.indexOf(id);
       if (idx >= 0) wanted.splice(idx, 1);
       const d = r.report.decision;
+      if (shopper) shops.push({ shopper, orderId: String(r.orderId), listingId: id, report: r.file, until: Date.now() + 5 * 60_000, disputed: new Set() });
       emit("graded", `listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
     } catch (e) {
       backoff(id, e.message.slice(0, 160));
@@ -260,6 +310,7 @@ export function createKeeper({
         queue: [...wanted],
         backoff: Object.fromEntries([...attempts].map(([k, v]) => [k, { fails: v.fails, next_at: v.nextAt, why: v.why }])),
         grades_today: day.grades,
+        mystery_shops: shops.map((s) => ({ listing: s.listingId, order: s.orderId })),
         events: events.slice(-80),
         last_settle_at: stats.lastSettleAt,
         last_error: stats.lastError,

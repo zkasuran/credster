@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Credster: every AI credit, assayed</title>
-<meta name="description" content="A market on NEAR for spare AI inference credits. Every seller endpoint is graded before it can trade: is it the model it claims, and is the token count honest?">
+<meta name="description" content="A market on NEAR for spare AI inference credits. Every seller endpoint is graded before it can trade: is it the model it claims and is the token count honest?">
 <meta name="theme-color" content="#08090b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Credster: every AI credit, assayed">
@@ -80,7 +80,7 @@
       <span class="line"><span class="hero-in" style="--d:.25s">Every AI credit,</span></span>
       <span class="line"><em class="hero-in gold-text" style="--d:.4s">assayed.</em></span>
     </h1>
-    <p class="lede hero-in" style="--d:.6s">Credster is a market for spare AI inference credits. Every seller is graded before it can trade: is it the model it claims, and is the token count honest? The grade lives on chain. An&nbsp;F suspends the listing.</p>
+    <p class="lede hero-in" style="--d:.6s">Credster is a market for spare AI inference credits. Every seller is graded before it can trade: is it the model it claims and is the token count honest? The grade lives on chain. An&nbsp;F suspends the listing.</p>
     <div class="cta-row hero-in" style="--d:.75s">
       <a class="btn btn-gold" href="live.html">Try it live on testnet<svg><use href="#i-arrow"/></svg></a>
       <a class="btn btn-ghost" href="#run">See the recorded run<svg><use href="#i-arrow"/></svg></a>
@@ -122,7 +122,7 @@
         <div class="risk-body">
           <p class="risk-n">Risk 01</p>
           <h3>Model substitution</h3>
-          <p>The endpoint says <code>Qwen3.8-27B</code> and serves a cheaper model, or an uncensored (“abliterated”) copy of the same one. The <code>model</code> field in the response is whatever the seller writes there.</p>
+          <p>The endpoint says <code>Qwen3.8-27B</code> and serves a cheaper model or an uncensored (“abliterated”) copy of the same one. The <code>model</code> field in the response is whatever the seller writes there.</p>
         </div>
       </article>
 
@@ -137,7 +137,7 @@
         <div class="risk-body">
           <p class="risk-n">Risk 02</p>
           <h3>Inflated metering</h3>
-          <p>The endpoint serves the right model and reports 35% more tokens than it used. Every call costs a little more than it should, and the buyer has no count of its own to compare.</p>
+          <p>The endpoint serves the right model and reports 35% more tokens than it used. Every call costs a little more than it should. The buyer has no count of its own to compare.</p>
         </div>
       </article>
     </div>
@@ -185,7 +185,9 @@
             </div>
           </div>
           <ol class="fp-rows">
+<!-- voice-gate:off -->
             <li><code class="probe">Fingerprint: ñandú 東京 🧪 0x7f3a9 «quoted» naïve façade — ∑∫√ ﷽ ⟨tok⟩ 1234567890…</code>
+<!-- voice-gate:on -->
               <div class="bars"><span class="bar ref"><i></i><b>117</b></span><span class="bar obs"><i></i><b>117</b></span></div></li>
             <li><code class="probe">def f(xs): return {k: v for k, v in zip(xs, xs[1:]) if k != v}  # 🚀 Ωmega …</code>
               <div class="bars"><span class="bar ref"><i></i><b>103</b></span><span class="bar obs"><i></i><b>103</b></span></div></li>
@@ -247,7 +249,7 @@
       <article class="step" data-step="3">
         <p class="step-n">Then</p>
         <h3>The grade goes on chain</h3>
-        <p>The grader posts the tier, the checks that passed and the sha256 of the full JSON report. The contract enforces the rules: a passing tier needs the fingerprint and metering checks, an A also needs the TEE check, and an F suspends the listing.</p>
+        <p>The grader posts the tier, the checks that passed and the sha256 of the full JSON report. The contract enforces the rules: a passing tier needs the fingerprint and metering checks, an A also needs the TEE check and an F suspends the listing.</p>
         <div class="panel chain">
           <p class="call"><span class="fn">post_grade</span>(<span class="arg">listing 9</span>, <span class="arg">tier F</span>, <span class="arg">checks</span>, <span class="arg">report_hash</span>)</p>
           <p class="hash" data-type>ba7605c13b54263a54ec3dfeaa5eae351d42ba10664f51ad0e9b115a201bec5e</p>
@@ -274,25 +276,25 @@
       <li class="mark-card t-A" data-fade>
         <svg class="hm hm-A" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-A"/></svg>
         <h3><span class="sr">Grade A:</span> TEE-signed</h3>
-        <p>Fingerprint and metering match, and a TEE signature proves which model answered. At least half the tasks right, at most 10% errors.</p>
+        <p>Fingerprint and metering match. A TEE signature proves which model answered. At least half the tasks right, at most 10% errors.</p>
         <p class="mark-state ok">Trades</p>
       </li>
       <li class="mark-card t-B" data-fade>
         <svg class="hm hm-B" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-B"/></svg>
         <h3><span class="sr">Grade B:</span> No TEE for this model</h3>
-        <p>Fingerprint and metering match, and the model has no TEE signatures at its provider to check. Same task and error bar as an A.</p>
+        <p>Fingerprint and metering match. The model has no TEE signatures at its provider to check. Same task and error bar as an A.</p>
         <p class="mark-state ok">Trades</p>
       </li>
       <li class="mark-card t-C" data-fade>
         <svg class="hm hm-C" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-C"/></svg>
         <h3><span class="sr">Grade C:</span> Capped</h3>
-        <p>Fingerprint and metering match, but the seller withheld a TEE signature its model supports, got fewer than half the tasks right, or failed more than 10% of calls.</p>
+        <p>Fingerprint and metering match, but the seller withheld a TEE signature its model supports, got fewer than half the tasks right or failed more than 10% of calls.</p>
         <p class="mark-state ok">Trades</p>
       </li>
       <li class="mark-card t-F" data-fade>
         <svg class="hm hm-F" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-F"/></svg>
         <h3><span class="sr">Grade F:</span> Suspended</h3>
-        <p>Wrong tokenizer, scaled token counts, a TEE signature naming another model, or most calls failing. Buying is refused and the probe calls go unpaid.</p>
+        <p>Wrong tokenizer, scaled token counts, a TEE signature naming another model or most calls failing. Buying is refused and the probe calls go unpaid.</p>
         <p class="mark-state bad">Can’t trade</p>
       </li>
     </ol>
@@ -407,11 +409,11 @@
   <div class="wrap">
     <div class="live-band" data-fade>
       <p class="live-band-k">The market is open</p>
-      <p class="live-band-t">Buy AI credits on the live testnet market with free test NEAR: at the ask, on a tab, or by making an offer. Or list a seller and see it graded. All in the browser, no install.</p>
+      <p class="live-band-t">Buy AI credits on the live testnet market with free test NEAR: at the ask, on a tab or by making an offer. Or list a seller and see it graded. All in the browser, no install.</p>
       <a class="btn btn-gold" href="live.html">Open the market<svg><use href="#i-arrow"/></svg></a>
     </div>
     <div class="run-notes">
-      <p data-fade>The three F listings were suspended. Buying from them was refused with <code>listing graded F</code>, and the contract paid nothing for the grader’s probe calls on them: orders 9, 10 and 11 closed with 0 spent.</p>
+      <p data-fade>The three F listings were suspended. Buying from them was refused with <code>listing graded F</code>. The contract paid nothing for the grader’s probe calls on them: orders 9, 10 and 11 closed with 0 spent.</p>
       <p class="caveat" data-fade>One run, six sellers, all personas run by the author against one NEAR AI Cloud account on <code>127.0.0.1</code> endpoints. It shows the mechanism working end to end. It is not a benchmark of grading accuracy.</p>
     </div>
   </div>
@@ -436,7 +438,7 @@
       <div class="pane" role="tabpanel" id="pane-spot" aria-labelledby="tab-spot">
         <div class="pane-text">
           <h3>Buy at the ask</h3>
-          <p>The deposit is the budget. The price is the ask at the moment of the fill, and the order keeps it.</p>
+          <p>The deposit is the budget. The price is the ask at the moment of the fill. The order keeps it.</p>
           <p>Alice bought a 0.1 NEAR order on listing #6 at the ask, 0.08 / 0.30 NEAR per million input / output tokens. The seller’s pricing rule then raised the ask to 0.088 / 0.33. Her order kept the old price.</p>
           <p class="txs"><a class="tx" href="https://testnet.nearblocks.io/txns/2wCgSrMrPCtKK9n2zSL2YiwSrMWTVpGwyqjLAJ8sJLDp">order 14 tx<svg><use href="#i-out"/></svg></a><a class="tx" href="https://testnet.nearblocks.io/txns/5WMLKrpEEudtWSCVKXRQ9v8mia8sDM8NXeyTHStTa9xE">reprice tx<svg><use href="#i-out"/></svg></a></p>
         </div>
@@ -586,7 +588,7 @@
       <li data-fade><h3>Contract escrow and rules</h3><p>Bonds, deposits, offers, the grade gates, claims with a challenge window, disputes, slashing and refunds. Rust, near-sdk 5.30, 24 unit tests.</p></li>
       <li data-fade><h3>Sub-accounts as identities</h3><p>Every seller, buyer and the grader is a sub-account of one parent, so each action traces to one agent.</p></li>
       <li data-fade><h3>Per-order ed25519 keys</h3><p>The buyer registers a fresh key on each order and signs gateway requests with it. A leaked key can spend only that order’s remaining budget, at that order’s price.</p></li>
-      <li data-fade><h3>NEAR AI Cloud</h3><p>The upstream for the demo sellers, the reference for fingerprints, and the source of the TEE signatures and attestation reports the grader checks.</p></li>
+      <li data-fade><h3>NEAR AI Cloud</h3><p>The upstream for the demo sellers, the reference for fingerprints and the source of the TEE signatures and attestation reports the grader checks.</p></li>
     </ul>
   </div>
 </section>
@@ -638,15 +640,15 @@ cd node &amp;&amp; TS_CONTRACT=market.credster-68480.testnet \
       <h2 class="h2" data-split>What it doesn’t do&nbsp;yet.</h2>
     </header>
     <ol class="limit-list">
-      <li data-fade><h3>The grader is one trusted account.</h3><p>Its reports are public and hash-bound, and anyone can rerun a grade with <code>grade --no-post</code>, but the contract trusts the grader’s account. A grader in a TEE, or several graders with a quorum, is not built.</p></li>
-      <li data-fade><h3>A fingerprint names a tokenizer family, not a model.</h3><p>Siblings that share a tokenizer give identical counts: <code>glm-5.3</code> and <code>glm-5.3-flash</code>, or Qwen3.8-27B and its abliterated copy. The TEE check separates them where it exists. Without it, four tasks usually won’t.</p></li>
-      <li data-fade><h3>A careful cheater can fake the counts.</h3><p>A seller that serves another model and rewrites <code>usage</code> to the claimed tokenizer’s counts passes the fingerprint. For TEE models the signature still catches it; for others it does not.</p></li>
-      <li data-fade><h3>A seller can withhold TEE signatures.</h3><p>For a model that has them at the provider, the grade is then capped at C rather than failed.</p></li>
-      <li data-fade><h3>The hardware quotes weren’t checked here.</h3><p>The grader trusts the signing address that NEAR AI’s public attestation report lists for a model. It does not verify the Intel TDX and NVIDIA quotes itself.</p></li>
-      <li data-fade><h3>Probes can be recognised.</h3><p>The grader uses its own account. A seller that answers the grader honestly and cheats everyone else is caught only by buyers’ metering disputes, not over substitution.</p></li>
-      <li data-fade><h3>Testnet NEAR, no streaming.</h3><p>Native testnet NEAR only: no stablecoin, no NEAR Intents yet. The seller node refuses <code>stream: true</code>.</p></li>
-      <li data-fade><h3>Provider terms.</h3><p>Many AI providers forbid reselling API access, and each seller answers for its own provider’s terms. Self-hosted open models are the clean case.</p></li>
+      <li data-fade><h3>The grader is one trusted account.</h3><p>Its reports are public and hash-bound. Anyone can rerun a grade with <code>grade --no-post</code>, but the contract only takes grades and dispute decisions from the grader. A grader in a TEE (or a quorum of graders) is not built.</p></li>
+      <li data-fade><h3>Without TEE signatures, it rests on counts and tasks.</h3><p>For models NEAR AI doesn’t serve in a TEE, a same-tokenizer sibling or rewritten <code>usage</code> can pass four tasks. Those listings top out at B.</p></li>
+      <li data-fade><h3>Mystery shoppers can be traced.</h3><p>Each shopper account is funded by the grader on chain, so a seller watching the grader’s transfers can spot one.</p></li>
+      <li data-fade><h3>The hardware quotes are trusted, not verified here.</h3><p>The grader and your browser trust the signers NEAR AI’s attestation report lists. Neither checks the Intel TDX and NVIDIA quotes behind them.</p></li>
+      <li data-fade><h3>Testnet NEAR, no streaming.</h3><p>No stablecoin and no NEAR Intents yet (Intents has no testnet). The seller node refuses <code>stream: true</code>.</p></li>
+      <li data-fade><h3>The sellers are mine.</h3><p>The live market serves real NEAR AI answers over HTTPS, but every seller on it is a persona run by the author. It shows the mechanism, not grading accuracy on outside sellers.</p></li>
+      <li data-fade><h3>Provider terms.</h3><p>Many AI providers forbid reselling API access. Each seller answers for its own provider’s terms. Self-hosted open models are the clean case.</p></li>
     </ol>
+    <p class="limits-note" data-fade>Closed on 12 Nov by building: every buyer now checks every answer’s TEE signature, a wrong model loses the seller its claim and part of its bond. Unannounced mystery shoppers re-grade each listing from fresh accounts.</p>
   </div>
 </section>
 

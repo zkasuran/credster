@@ -1,7 +1,7 @@
 // Buyer client: opens orders (spot, tab, bargain), calls a seller node with
 // signed requests, keeps the node's signed receipts, and audits claims.
 import { view, viewAll, call, newKeyPair, keyPairFrom } from "./near.js";
-import { signRequest, verifyReceipt } from "./sign.js";
+import { signRequest, verifyReceipt, sha256hex } from "./sign.js";
 import { path, appendLine, readLines, readJson, writeJson } from "./store.js";
 
 export class Buyer {
@@ -106,7 +106,7 @@ export class Buyer {
    * Sends one chat completion through the seller node. Returns the parsed
    * answer, the verified receipt and the raw bytes (the grader needs those).
    */
-  async chat(orderId, body, { endpoint, nodeKey } = {}) {
+  async chat(orderId, body, { endpoint, nodeKey, tee = false } = {}) {
     const order = await view("get_order", { order_id: String(orderId) });
     const listing = await view("get_listing", { listing_id: String(order.listing_id) });
     endpoint = endpoint || listing.endpoint;
@@ -122,8 +122,16 @@ export class Buyer {
     const sig = res.headers.get("x-ts-receipt-sig") || "";
     const receiptOk = !!text && verifyReceipt(nodeKey, text, sig);
     const receipt = text ? JSON.parse(text) : null;
-    if (receipt) appendLine(path(...this.dir, `receipts-${orderId}.jsonl`), { text, sig, ok: receiptOk });
-    return { ok: true, status: res.status, json: JSON.parse(raw), receipt, receiptOk, ms, requestBytes: bytes, raw };
+    let teeResult = null;
+    if (tee && receipt) {
+      // Every answer from a model NEAR AI serves in a TEE should carry its signature.
+      const { teeCapable, checkAnswer } = await import("./tee.js");
+      teeResult = (await teeCapable(listing.model))
+        ? await checkAnswer(endpoint, { chatId: receipt.chat_id, model: listing.model, reqHash: sha256hex(bytes), respHash: sha256hex(raw) })
+        : { verdict: "none", reason: `NEAR AI publishes no TEE signers for ${listing.model}` };
+    }
+    if (receipt) appendLine(path(...this.dir, `receipts-${orderId}.jsonl`), { text, sig, ok: receiptOk, tee: teeResult?.verdict || null, tee_reason: teeResult?.reason || null });
+    return { ok: true, status: res.status, json: JSON.parse(raw), receipt, receiptOk, tee: teeResult, ms, requestBytes: bytes, raw };
   }
 
   receipts(orderId) {
@@ -136,6 +144,8 @@ export class Buyer {
    */
   async audit(orderId) {
     const mine = this.receipts(orderId);
+    const lines = readLines(path(...this.dir, `receipts-${orderId}.jsonl`)).filter((r) => r.ok);
+    const caught = lines.find((r) => r.tee === "contradicts" || r.tee === "altered");
     const haveIn = mine.reduce((s, r) => s + r.in, 0);
     const haveOut = mine.reduce((s, r) => s + r.out, 0);
     const all = await viewAll("get_claims");
@@ -145,9 +155,9 @@ export class Buyer {
     for (const c of claims) {
       accIn += Number(c.in_tokens);
       accOut += Number(c.out_tokens);
-      if ((accIn > haveIn || accOut > haveOut) && c.status === "Pending") {
-        bad.push({ claim: c, reason: `claims total ${accIn} in / ${accOut} out, signed receipts cover ${haveIn} in / ${haveOut} out` });
-      }
+      if (c.status !== "Pending") continue;
+      if (accIn > haveIn || accOut > haveOut) bad.push({ claim: c, reason: `claims total ${accIn} in / ${accOut} out, signed receipts cover ${haveIn} in / ${haveOut} out` });
+      else if (caught) bad.push({ claim: c, reason: `TEE check on answer #${JSON.parse(caught.text).seq}: ${caught.tee_reason}` });
     }
     return { receipts: mine.length, haveIn, haveOut, claims, bad };
   }

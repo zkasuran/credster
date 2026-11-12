@@ -34,7 +34,7 @@ export function createSellerNode(cfg) {
     name, // local node name, e.g. "honest"
     upstream = process.env.TS_UPSTREAM_URL || "https://cloud-api.near.ai",
     upstreamKey,
-    mode = "honest", // honest | swap | inflate | overclaim
+    mode = "honest", // honest | swap | switch | inflate | overclaim
     swapModel, // for mode=swap: the cheaper model actually served
     inflate = 1.35, // for mode=inflate: usage multiplier
     claimEverySec = 20,
@@ -54,7 +54,10 @@ export function createSellerNode(cfg) {
   const receiptsFile = path("nodes", name, "receipts.jsonl");
   const claimsFile = path("nodes", name, "claims.jsonl");
   const seen = new Map(); // sig -> expiry
-  const served = new Set(); // upstream chat ids this node served
+  // Upstream chat id -> the model that really answered. Kept on disk so the node can
+  // still relay TEE signatures for disputes after a restart.
+  const servedFile = path("nodes", name, "served.jsonl");
+  const served = new Map(readLines(servedFile).map((x) => [x.chat_id, x.model]));
   const callsPerOrder = new Map();
   const cache = new Map();
   let seq = readLines(receiptsFile).length;
@@ -131,8 +134,11 @@ export function createSellerNode(cfg) {
 
     // Honest mode forwards the buyer's bytes unchanged, so a TEE signature over
     // the request hash still matches what the buyer sent.
+    // "switch" is a bait-and-switch demo: honest with the grader's trial orders,
+    // the cheaper model for everyone else.
+    const swapping = mode === "swap" || (mode === "switch" && !order.trial);
     let upBody = body;
-    if (mode === "swap") upBody = Buffer.from(JSON.stringify({ ...parsed, model: swapModel }));
+    if (swapping) upBody = Buffer.from(JSON.stringify({ ...parsed, model: swapModel }));
     const t0 = Date.now();
     const up = await fetch(`${upstream}/v1/chat/completions`, {
       method: "POST",
@@ -146,7 +152,7 @@ export function createSellerNode(cfg) {
       return send(res, up.status, out); // no receipt, nothing billed
     }
     let j = JSON.parse(out);
-    if (mode === "swap") {
+    if (swapping) {
       j.model = listing.model; // a substituting reseller relabels the answer
       out = Buffer.from(JSON.stringify(j));
     }
@@ -158,7 +164,11 @@ export function createSellerNode(cfg) {
       j.usage = u;
       out = Buffer.from(JSON.stringify(j));
     }
-    if (j.id) served.add(j.id);
+    if (j.id) {
+      const realModel = swapping ? swapModel : listing.model;
+      served.set(j.id, realModel);
+      appendLine(servedFile, { chat_id: j.id, model: realModel, order: String(orderId) });
+    }
     const u = j.usage || {};
     const r = {
       listing: listingId,
@@ -187,6 +197,8 @@ export function createSellerNode(cfg) {
 
   async function relaySignature(req, res, chatId, model) {
     if (!served.has(chatId)) return err(res, 404, "unknown chat id");
+    // The upstream signature names the model that really ran, so ask for that one.
+    model = served.get(chatId) || model;
     const up = await fetch(`${upstream}/v1/signature/${encodeURIComponent(chatId)}?model=${encodeURIComponent(model)}&signing_algo=ecdsa`, {
       headers: { authorization: `Bearer ${upstreamKey}` },
       signal: AbortSignal.timeout(30_000),
@@ -211,7 +223,7 @@ export function createSellerNode(cfg) {
         // The upstream signature names the model it really ran, so the node
         // asks for the model it really ran too. A swap shows up as a mismatch.
         const l = await getListing();
-        return await relaySignature(req, res, decodeURIComponent(m[1]), mode === "swap" ? swapModel : url.searchParams.get("model") || l.model);
+        return await relaySignature(req, res, decodeURIComponent(m[1]), url.searchParams.get("model") || l.model);
       }
       if (req.method === "GET" && url.pathname === "/credster/info") {
         const l = await getListing();

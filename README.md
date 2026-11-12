@@ -21,11 +21,14 @@ Escrow and spending limits do not help here. The buyer pays exactly what was agr
 
 1. A seller lists a model, an OpenAI-compatible endpoint and a price. It also posts a NEAR bond. The seller's own upstream key stays on the seller's node (`node/src/seller-node.js`); buyers never see it.
 2. The grader buys a small trial order like any buyer and probes the endpoint (`node/src/grader.js`):
-   - **Token-count fingerprint.** Three fixed probe texts. The prompt token count depends on the model's tokenizer and chat template, so it is a fingerprint. Measured against NEAR AI Cloud directly, the counts were identical on repeat calls and differed between model families (`node/fingerprints.json`). A mismatch means a different model; counts that are all the reference times one factor mean inflated billing.
+   - **Token-count fingerprint.** Three fixed probe texts. The prompt token count depends on the model's tokenizer and chat template, so it is a fingerprint. The grader measures the claimed model's reference at NEAR AI during each grade (cached 30 minutes; `node/fingerprints.json` is the fallback), because a provider can redeploy a model with a new template. A mismatch means a different model; counts that are all the reference times one factor mean inflated billing.
    - **TEE signature.** For models NEAR AI Cloud serves in a TEE, the seller node relays the provider's signature for one probe. The grader checks that the signed text is `<claimed model>:sha256(our request):sha256(our response)` and that it recovers to a signing address in NEAR AI's public attestation report for that model. A valid signature that names a different model is proof of substitution.
    - **Fresh checkable tasks** (multiplication, string reversal, sorting, counting) generated from a random seed each run, plus latency and error rate.
 3. The grade (A, B, C or F) goes on chain with the sha256 of the full JSON report. The contract enforces the rules: a passing tier needs the fingerprint and metering checks, tier A needs the TEE check and F suspends the listing. Only fresh, passing grades can trade.
-4. Buyers sign each request with a per-order key. The seller node signs a usage receipt for each answer and claims batches on chain. The buyer has a challenge window to dispute. The grader checks the receipts behind a disputed claim; a claim the receipts do not cover is rejected and the seller's bond is slashed to the buyer.
+4. Buyers sign each request with a per-order key. The seller node signs a usage receipt for each answer and claims batches on chain. The buyer has a challenge window to dispute.
+5. **Every answer is checked, not only the grader's.** For a model NEAR AI serves in a TEE, the buyer's page (and `cli.js chat`) fetches that answer's TEE signature through the seller node and verifies it in the browser against NEAR AI's public attestation report: `✓ TEE: answered by Qwen3.8-27B` or `✗` with the model that really answered. A wrong model or a changed answer disputes the seller's claim automatically. A missing signature is flagged and loses the seller any claim that gets disputed.
+6. **Disputes need proof from the seller.** The grader upholds a disputed claim only if the seller's node-signed receipts cover it and, for TEE models, every receipt's answer carries NEAR AI's signature for the claimed model over exactly those bytes. Otherwise the claim is rejected and the seller's bond is slashed to the buyer.
+7. **Mystery shoppers.** Every 2 to 4 hours, at a random time, the keeper re-grades each listing from a fresh account as an ordinary customer order, then audits that order's bill. A seller that treats the grader well and other buyers badly is suspended when the shopper catches it.
 
 Market rules in full: [docs/RULES.md](docs/RULES.md).
 
@@ -147,16 +150,15 @@ sequenceDiagram
 
 ## What does not work yet and what I did not check
 
-- **The grader is one trusted account.** Its reports are public and hash-bound. Anyone can rerun `node src/cli.js grade --no-post`, but the contract trusts the grader's account. Running the grader in a TEE or as several graders with a quorum is not built.
-- **The fingerprint identifies a tokenizer family, not a model.** Siblings that share a tokenizer give identical counts: `z-ai/glm-5.3` with `z-ai/glm-5.3-flash`. So do `Qwen3.8-27B` and its abliterated copy. The TEE check separates the Qwen pair in the run above. For models without TEE signatures, a same-tokenizer swap is caught only if the checkable tasks expose it. With four tasks they usually will not.
-- **A careful cheater can fake the counts.** A seller that serves another model and rewrites `usage` to the claimed tokenizer's counts passes the fingerprint. For TEE models the signature still catches it; for others it does not.
-- **A seller can refuse to relay TEE signatures.** For a model that has TEE signatures at the provider, Credster then caps the grade at C rather than failing it.
-- **I did not verify the Intel TDX and NVIDIA quotes myself.** The grader trusts the signing address that NEAR AI's public attestation report lists for a model.
-- **Probes can be recognised.** The grader uses its own account. A seller that answers the grader honestly and cheats everyone else is caught only by buyers' disputes over metering, not over substitution. Rotating grader sub-accounts would make this harder; it is not built.
-- **No streaming.** The seller node refuses `stream: true`.
-- **Native testnet NEAR only.** No stablecoin and no NEAR Intents. Intents has no testnet. Paying a deposit from another chain through Intents is the obvious next step.
-- **Small test.** One run, six sellers, all sellers are personas run by me against one NEAR AI Cloud account, `127.0.0.1` endpoints. This shows the mechanism works end to end; it is not a benchmark of grading accuracy.
-- **Provider terms.** Many AI providers forbid reselling API access. A seller is responsible for its own provider's terms. Self-hosted open models are the clean case.
+- **The grader is one trusted account.** Its reports are public and hash-bound. Anyone can rerun a grade with `node src/cli.js grade --no-post`, but the contract only accepts grades and dispute decisions from the grader. A grader in a TEE (or several graders with a quorum) is not built.
+- **Without TEE signatures, grading rests on token counts and tasks.** For models NEAR AI does not serve in a TEE (DeepSeek here), a seller can swap in a sibling with the same tokenizer. It can also serve another model and rewrite `usage` to the right counts. Four tasks will usually not notice either. Such listings top out at grade B.
+- **Mystery shoppers can be traced.** Each shopper account is funded by the grader on chain, so a seller that watches the grader's transfers can spot one. Funding them through an unlinkable path is not built.
+- **The hardware quotes are trusted, not verified here.** The grader and the browser trust the signing addresses NEAR AI's public attestation report lists. Neither verifies the Intel TDX and NVIDIA quotes behind them.
+- **Testnet NEAR, no streaming.** No stablecoin and no NEAR Intents (Intents has no testnet). The seller node refuses `stream: true`.
+- **The sellers are mine.** The live market at credster.store runs real NEAR AI answers over public HTTPS, but every seller on it is a persona I run against one NEAR AI account. It shows the mechanism end to end; it is not a measurement of grading accuracy on outside sellers.
+- **Provider terms.** Many AI providers forbid reselling API access. A seller answers for its own provider's terms; self-hosted open models are the clean case.
+
+What changed on 12 Nov: per-answer TEE checks, substitution disputes and mystery shoppers closed three limits listed before ("probes can be recognised", "a seller can withhold TEE signatures", "a careful cheater can fake the counts" for TEE models). The live run that shows them, including a false F caused by a provider-side change and how it was fixed, is in [evidence/live-2026-11-12-tee-and-mystery-shopper/](evidence/live-2026-11-12-tee-and-mystery-shopper/NOTE.md).
 
 ## Repository
 

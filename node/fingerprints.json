@@ -4,44 +4,44 @@
       "counts": [
         117,
         103,
-        110
+        109
       ],
       "stable": true,
       "runs": [
         [
           117,
           103,
-          110
+          109
         ],
         [
           117,
           103,
-          110
+          109
         ]
       ],
-      "measured_at": "2026-11-12T06:40:14.776Z",
+      "measured_at": "2026-11-12T22:31:18.409Z",
       "source": "https://cloud-api.near.ai"
     },
     "Qwen/Qwen3.6-35B-A3B-FP8": {
       "counts": [
         75,
         61,
-        68
+        67
       ],
       "stable": true,
       "runs": [
         [
           75,
           61,
-          68
+          67
         ],
         [
           75,
           61,
-          68
+          67
         ]
       ],
-      "measured_at": "2026-11-12T06:40:17.805Z",
+      "measured_at": "2026-11-12T22:31:19.763Z",
       "source": "https://cloud-api.near.ai"
     },
     "z-ai/glm-5.3-flash": {
@@ -63,7 +63,7 @@
           74
         ]
       ],
-      "measured_at": "2026-11-12T06:40:29.202Z",
+      "measured_at": "2026-11-12T22:31:45.942Z",
       "source": "https://cloud-api.near.ai"
     },
     "z-ai/glm-5.3": {
@@ -85,7 +85,7 @@
           74
         ]
       ],
-      "measured_at": "2026-11-12T06:40:32.820Z",
+      "measured_at": "2026-11-12T22:31:48.290Z",
       "source": "https://cloud-api.near.ai"
     },
     "deepseek/deepseek-v4.1-flash": {
@@ -107,7 +107,7 @@
           90
         ]
       ],
-      "measured_at": "2026-11-12T06:40:41.234Z",
+      "measured_at": "2026-11-12T22:31:54.617Z",
       "source": "https://cloud-api.near.ai"
     },
     "deepseek/deepseek-v3.2": {
@@ -129,7 +129,7 @@
           64
         ]
       ],
-      "measured_at": "2026-11-12T06:41:33.308Z",
+      "measured_at": "2026-11-12T22:32:44.843Z",
       "source": "https://cloud-api.near.ai"
     },
     "google/gemini-2.5-flash-lite": {
@@ -151,7 +151,7 @@
           53
         ]
       ],
-      "measured_at": "2026-11-12T06:41:37.927Z",
+      "measured_at": "2026-11-12T22:32:48.253Z",
       "source": "https://cloud-api.near.ai"
     },
     "anthropic/claude-haiku-5-5": {
@@ -173,7 +173,7 @@
           90
         ]
       ],
-      "measured_at": "2026-11-12T06:41:45.175Z",
+      "measured_at": "2026-11-12T22:32:53.601Z",
       "source": "https://cloud-api.near.ai"
     },
     "moonshotai/kimi-k2.6": {
@@ -195,29 +195,29 @@
           72
         ]
       ],
-      "measured_at": "2026-11-12T06:43:00.131Z",
+      "measured_at": "2026-11-12T22:33:41.742Z",
       "source": "https://cloud-api.near.ai"
     },
     "Qwen/Qwen3.8-27B-abliterated": {
       "counts": [
         117,
         103,
-        110
+        109
       ],
       "stable": true,
       "runs": [
         [
           117,
           103,
-          110
+          109
         ],
         [
           117,
           103,
-          110
+          109
         ]
       ],
-      "measured_at": "2026-11-12T06:43:07.133Z",
+      "measured_at": "2026-11-12T22:34:28.364Z",
       "source": "https://cloud-api.near.ai"
     }
   },

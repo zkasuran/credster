@@ -18,6 +18,10 @@ export const PERSONAS = {
     model: "z-ai/glm-5.3-flash", mode: "inflate", inflate: 1.35, ask: ["0.03", "0.12"],
     title: "Inflated billing", blurb: "Right model, reports 35% more tokens than it used.", expect: "F: usage is 1.35x the reference",
   },
+  switch: {
+    model: "Qwen/Qwen3.8-27B", mode: "switch", swapModel: "Qwen/Qwen3.6-35B-A3B-FP8", ask: ["0.06", "0.24"],
+    title: "Bait and switch", blurb: "Serves the real model to the grader's trial order, then the cheaper one to everyone else.", expect: "passes its first grade; your page flags the swap on the first answer and a mystery-shopper re-grade suspends it",
+  },
   overclaim: {
     model: "z-ai/glm-5.3-flash", mode: "overclaim", ask: ["0.025", "0.10"],
     title: "Overclaim", blurb: "Bills the grader honestly, then claims 3x the tokens it served you.", expect: "passes grading; your receipts catch it and its bond is slashed",
@@ -29,4 +33,4 @@ export const PERSONAS = {
 };
 
 /** Personas a visitor may launch on the live server. */
-export const LAUNCHABLE = ["honest", "swap", "sibling", "inflate", "overclaim"];
+export const LAUNCHABLE = ["honest", "swap", "sibling", "inflate", "switch", "overclaim"];
