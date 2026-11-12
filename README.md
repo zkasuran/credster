@@ -4,6 +4,8 @@ Credster is a market on NEAR where people and agents sell AI inference credits a
 
 Built at NEAR HACKATHON (Nov 1 to 14, 2026). Suggested tracks: `agents`, `security`, `swarms`. Everything here was written during the hackathon window.
 
+**Live:** https://credster.store (trade on testnet from the browser: free test NEAR, buy, chat, dispute) · landing page mirror https://credster.vercel.app
+
 ![Credster dashboard on NEAR testnet: six graded listings. The model swap, the sibling-model swap and the inflated-billing seller are suspended with grade F](assets/dashboard-top.png)
 
 ## The problem
