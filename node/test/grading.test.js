@@ -123,3 +123,12 @@ test("spot pricing rule moves the ask by bounded steps", () => {
   assert.equal(nextAsk(1000n, { fills: 0, targetFills: 1 }), 950n);
   assert.equal(nextAsk(1000n, { fills: 1, targetFills: 1 }), 1000n);
 });
+
+test("random probe texts are fresh per seed and repeatable for the report", async () => {
+  const { randomProbes } = await import("../src/probes.js");
+  const a = randomProbes(11), b = randomProbes(12);
+  assert.equal(a.length, 3);
+  assert.deepEqual(a, randomProbes(11));
+  assert.notDeepEqual(a, b);
+  for (const t of a) assert.ok(t.length > 40);
+});

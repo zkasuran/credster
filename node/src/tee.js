@@ -5,6 +5,7 @@
 // report lists the signing addresses for each model it serves in a TEE.
 import { randomInt } from "node:crypto";
 import { recoverEip191 } from "./sign.js";
+import { verifyHardware } from "./attest.js";
 
 const PROVIDER = process.env.TS_PROVIDER || "https://cloud-api.near.ai";
 const cache = new Map(); // model -> { at, addresses }
@@ -65,6 +66,15 @@ export async function judgeSignature(sig, { model, reqHash, respHash }) {
   return { verdict: "verified", signer, signedModel: model };
 }
 
+/** judgeSignature plus the hardware behind the signer (Intel TDX quote and NVIDIA GPUs). */
+export async function judgeWithHardware(sig, ctx) {
+  const v = await judgeSignature(sig, ctx);
+  if (v.verdict !== "verified" && v.verdict !== "contradicts") return v;
+  const hw = await verifyHardware(v.signedModel || ctx.model, v.signer);
+  if (!hw.ok) return { verdict: "unsigned", signer: v.signer, reason: `the signer's hardware attestation failed: ${hw.steps.find((s) => !s.ok)?.check}`, hardware: hw };
+  return { ...v, hardware: { ok: true, tdx: hw.tdx?.status, gpus: hw.nvidia?.gpus } };
+}
+
 /** Fetches the signature for one answer through the seller node, with retries. */
 export async function fetchSignature(endpoint, chatId, model, { tries = 4, waitMs = 1500 } = {}) {
   for (let i = 0; i < tries; i++) {
@@ -83,5 +93,5 @@ export async function fetchSignature(endpoint, chatId, model, { tries = 4, waitM
 /** Fetch and judge in one step. */
 export async function checkAnswer(endpoint, { chatId, model, reqHash, respHash }) {
   if (!chatId) return { verdict: "unsigned", reason: "the answer carries no chat id" };
-  return judgeSignature(await fetchSignature(endpoint, chatId, model), { model, reqHash, respHash });
+  return judgeWithHardware(await fetchSignature(endpoint, chatId, model), { model, reqHash, respHash });
 }

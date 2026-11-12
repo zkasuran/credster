@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { randomInt } from "node:crypto";
 import { view, viewAll, call, near, fmtNear } from "./near.js";
 import { sha256hex, recoverEip191, verifyReceipt, receiptsHash } from "./sign.js";
-import { FINGERPRINT_PROBES, fingerprintRequest, capabilityTasks, capabilityRequest } from "./probes.js";
+import { FINGERPRINT_PROBES, fingerprintRequest, capabilityTasks, capabilityRequest, randomProbes } from "./probes.js";
+import { verifyHardware } from "./attest.js";
 import { Buyer } from "./buyer.js";
 import { teeCapable, checkAnswer } from "./tee.js";
 
@@ -61,8 +62,9 @@ export async function buildFingerprints(models, key) {
 const liveRefs = new Map(); // model -> { at, counts }
 const providerKey = () => process.env.TS_PROVIDER_KEY || process.env.NEARAI_API_KEY || process.env.TS_UPSTREAM_KEY || "";
 
-export async function liveReference(model) {
-  const hit = liveRefs.get(model);
+export async function liveReference(model, probes = FINGERPRINT_PROBES) {
+  const cacheKey = `${model}\n${probes.join("\n")}`;
+  const hit = liveRefs.get(cacheKey);
   if (hit && Date.now() - hit.at < 30 * 60_000) return hit;
   const key = providerKey();
   if (!key) return null;
@@ -70,12 +72,12 @@ export async function liveReference(model) {
     const runs = [];
     for (let run = 0; run < 2; run++) {
       const counts = [];
-      for (let i = 0; i < FINGERPRINT_PROBES.length; i++) counts.push((await providerChat(key, fingerprintRequest(model, i))).usage.prompt_tokens);
+      for (let i = 0; i < probes.length; i++) counts.push((await providerChat(key, fingerprintRequest(model, i, probes))).usage.prompt_tokens);
       runs.push(counts);
     }
     if (JSON.stringify(runs[0]) !== JSON.stringify(runs[1])) return null; // not stable right now
     const ref = { at: Date.now(), counts: runs[0], measured_at: new Date().toISOString(), source: PROVIDER };
-    liveRefs.set(model, ref);
+    liveRefs.set(cacheKey, ref);
     return ref;
   } catch {
     return null;
@@ -148,6 +150,11 @@ export async function checkAttestation(endpoint, model, call1) {
   out.steps.push({ check: "signed text names the claimed model and our exact bytes", fail: signedModel === model ? "the signed response bytes differ from the bytes we received (the seller changed the answer)" : "the signature does not name the claimed model and our bytes", ok: sig.text === expected, got: sig.text.slice(0, 160) });
   out.steps.push({ check: "provider attestation report lists the signer for the claimed model", fail: "the claimed model's attestation report does not list this signer", ok: claimedAtt.addresses.includes(recovered), listed: claimedAtt.addresses });
   if (sigOk && sig.text === expected && claimedAtt.addresses.includes(recovered)) {
+    // The signer must also sit in genuine, up-to-date TDX hardware with attested GPUs.
+    const hw = await verifyHardware(model, recovered);
+    out.hardware = hw;
+    out.steps.push({ check: "Intel TDX quote and NVIDIA GPU attestation verified by the grader for this signer", ok: hw.ok });
+    if (!hw.ok) return { ...out, reason: `hardware attestation failed: ${hw.steps.find((s) => !s.ok)?.check}` };
     return { ...out, verdict: "verified", attested: true };
   }
   if (sigOk && signedModel && signedModel !== model) {
@@ -203,17 +210,34 @@ export function decideTier({ fingerprint, attestation, capabilityPct, errorPct }
  * re-grade arrives as an ordinary customer order: not a trial order and not the
  * grader's own account. The funding transfer is still visible on chain.
  */
+const WORDS = ["amber", "otter", "maple", "quartz", "harbor", "lumen", "cedar", "falcon", "juniper", "nova", "pebble", "sable", "tundra", "willow", "zephyr", "basil", "cobalt", "dune", "ember", "fjord"];
+
 export async function newShopper(grader, amount = near("0.12")) {
-  const { newKeyPair, saveKey, transfer } = await import("./near.js");
+  const { newKeyPair, saveKey, transfer, balance } = await import("./near.js");
+  // Preferred: a named account from the public testnet faucet, like any outside
+  // buyer's. Nothing on chain links it to the grader.
+  if (process.env.TS_SHOPPER_FAUCET !== "0") {
+    try {
+      const w = () => WORDS[randomInt(WORDS.length)];
+      const id = `${w()}-${w()}-${randomInt(1000, 99999)}.testnet`;
+      const kp = newKeyPair();
+      saveKey(id, kp);
+      const r = await fetch(process.env.TS_HELPER_URL || "https://helper.nearprotocol.com/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ newAccountId: id, newAccountPublicKey: kp.getPublicKey().toString() }), signal: AbortSignal.timeout(60_000) });
+      if (r.ok) {
+        for (let i = 0; i < 20 && (await balance(id)) === null; i++) await new Promise((s) => setTimeout(s, 1500));
+        if ((await balance(id)) !== null) return { id, funding: "testnet faucet" };
+      }
+    } catch {}
+  }
   const { baseDecode } = await import("near-api-js");
   const kp = newKeyPair();
   const id = Buffer.from(baseDecode(kp.getPublicKey().toString().split(":")[1])).toString("hex");
   saveKey(id, kp);
   const r = await transfer(grader, id, amount);
-  return { id, tx: r.txHash };
+  return { id, tx: r.txHash, funding: "grader" };
 }
 
-export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), shopper = null, log = console.log } = {}) {
+export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), shopper = null, shopperFunding = null, log = console.log } = {}) {
   const refs = loadRefs();
   const listing = await view("get_listing", { listing_id: String(listingId) });
   if (!listing) throw new Error(`no listing ${listingId}`);
@@ -238,23 +262,29 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     }
   };
 
-  // 2. Fingerprint probes.
+  // 2. Fingerprint probes: fresh random texts for every grade when the grader can
+  //    measure their reference at the provider, the fixed texts otherwise.
+  const probeSeed = randomInt(1, 2 ** 31);
+  const probes = providerKey() ? randomProbes(probeSeed) : FINGERPRINT_PROBES;
   const fp = [];
-  for (let i = 0; i < FINGERPRINT_PROBES.length; i++) fp.push(await run("fingerprint", fingerprintRequest(listing.model, i)));
+  for (let i = 0; i < probes.length; i++) fp.push(await run("fingerprint", fingerprintRequest(listing.model, i, probes)));
   const observed = fp.map((r) => r.json?.usage?.prompt_tokens ?? null);
-  const stored = refs.models[listing.model]?.stable ? refs.models[listing.model].counts : null;
-  const live = await liveReference(listing.model);
+  const fixed = probes === FINGERPRINT_PROBES;
+  const stored = fixed && refs.models[listing.model]?.stable ? refs.models[listing.model].counts : null;
+  const live = await liveReference(listing.model, probes);
+  if (!fixed) for (const m of Object.keys(refs.models)) if (m !== listing.model) refs.models[m] = { ...refs.models[m], stable: false };
   const reference = live?.counts || stored;
   // "looks like" compares against live references of the same provider family when available.
   const family = String(listing.model).split("/")[0];
   for (const m of Object.keys(refs.models).filter((m) => m.split("/")[0] === family && m !== listing.model)) {
-    const lr = observed.every((x) => typeof x === "number") && JSON.stringify(observed) !== JSON.stringify(reference) ? await liveReference(m) : null;
+    const lr = observed.every((x) => typeof x === "number") && JSON.stringify(observed) !== JSON.stringify(reference) ? await liveReference(m, probes) : null;
     if (lr) refs.models[m] = { ...refs.models[m], counts: lr.counts, stable: true };
   }
   if (live) refs.models[listing.model] = { ...refs.models[listing.model], counts: live.counts, stable: true };
   const fingerprint = {
     observed, reference, ...compareFingerprint(observed, reference), looks_like: identify(observed, refs),
     reference_source: live ? `measured at ${PROVIDER} during this grade (${live.measured_at})` : "fingerprints.json",
+    probes: fixed ? "fixed" : { seed: probeSeed, texts: probes },
     ...(live && stored && JSON.stringify(stored) !== JSON.stringify(live.counts) ? { stored_reference: stored } : {}),
   };
   log(`  fingerprint observed ${JSON.stringify(observed)} reference ${JSON.stringify(reference)} -> ${fingerprint.verdict}${fingerprint.looks_like.length ? " (matches " + fingerprint.looks_like.join(", ") + ")" : ""}`);
@@ -291,9 +321,9 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     grader,
     contract: process.env.TS_CONTRACT,
     listing: { id: String(listingId), seller: listing.seller, model: listing.model, endpoint: listing.endpoint, node_key: listing.node_key, ask_in: listing.ask_in, ask_out: listing.ask_out },
-    trial_order: { id: String(orderId), tx: orderTx, buyer: shopper || grader, mystery_shopper: !!shopper },
+    trial_order: { id: String(orderId), tx: orderTx, buyer: shopper || grader, mystery_shopper: !!shopper, funded_by: shopper ? shopperFunding : undefined },
     fingerprint,
-    probes_sha256: sha256hex(JSON.stringify(FINGERPRINT_PROBES)),
+    probes_sha256: sha256hex(JSON.stringify(probes)),
     capability: { seed, pct: capabilityPct, tasks: capability },
     attestation,
     calls: { total: calls.length, ok: okCalls.length, error_pct: errorPct, p50_latency_ms: latency, receipts_ok: receiptsOk, detail: calls },
@@ -406,7 +436,9 @@ export async function postAuditGrade({ grader, listingId, claim, base }) {
   const listing = await view("get_listing", { listing_id: String(listingId) });
   if (!listing || listing.status === "Suspended" || listing.status === "Closed") return { skipped: true };
   const prev = JSON.parse(readFileSync(join(REPORTS, base), "utf8"));
-  const reason = `billed a mystery shopper ${claim.in_tokens} in / ${claim.out_tokens} out in claim ${claim.id}, more than its own receipts cover; the dispute was rejected`;
+  const reason = String(claim.dispute_reason || "").startsWith("TEE")
+    ? `a mystery shopper's answer failed its TEE check (${claim.dispute_reason}); claim ${claim.id} was rejected`
+    : `billed a mystery shopper ${claim.in_tokens} in / ${claim.out_tokens} out in claim ${claim.id}, more than its own receipts cover; the dispute was rejected`;
   const report = {
     ...prev,
     graded_at: new Date().toISOString(),
@@ -424,5 +456,5 @@ export async function postAuditGrade({ grader, listingId, claim, base }) {
     capability_pct: g.capability_pct ?? 0, p50_latency_ms: g.p50_latency_ms ?? 0, error_pct: g.error_pct ?? 0,
     report_hash: hash, report_url: `${REPORT_BASE}/${fileName}`,
   });
-  return { tx: r.txHash, file: fileName, hash };
+  return { tx: r.txHash, file: fileName, hash, reason };
 }

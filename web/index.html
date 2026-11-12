@@ -642,13 +642,13 @@ cd node &amp;&amp; TS_CONTRACT=market.credster-68480.testnet \
     <ol class="limit-list">
       <li data-fade><h3>The grader is one trusted account.</h3><p>Its reports are public and hash-bound. Anyone can rerun a grade with <code>grade --no-post</code>, but the contract only takes grades and dispute decisions from the grader. A grader in a TEE (or a quorum of graders) is not built.</p></li>
       <li data-fade><h3>Without TEE signatures, it rests on counts and tasks.</h3><p>For models NEAR AI doesn’t serve in a TEE, a same-tokenizer sibling or rewritten <code>usage</code> can pass four tasks. Those listings top out at B.</p></li>
-      <li data-fade><h3>Mystery shoppers can be traced.</h3><p>Each shopper account is funded by the grader on chain, so a seller watching the grader’s transfers can spot one.</p></li>
-      <li data-fade><h3>The hardware quotes are trusted, not verified here.</h3><p>The grader and your browser trust the signers NEAR AI’s attestation report lists. Neither checks the Intel TDX and NVIDIA quotes behind them.</p></li>
+      <li data-fade><h3>The software image is recorded, not pinned.</h3><p>The grader verifies each TEE signer’s Intel TDX quote and NVIDIA GPUs itself and records the VM measurements. It keeps no list of approved images, so it can’t tell NEAR AI’s serving code from other code in a genuine enclave.</p></li>
+      <li data-fade><h3>A shopper’s behaviour is still recognisable.</h3><p>Its account and probe texts give nothing away, but a visit is seven quick calls in a fixed style, then an immediate close. A seller profiling orders could answer honestly only then.</p></li>
       <li data-fade><h3>Testnet NEAR, no streaming.</h3><p>No stablecoin and no NEAR Intents yet (Intents has no testnet). The seller node refuses <code>stream: true</code>.</p></li>
       <li data-fade><h3>The sellers are mine.</h3><p>The live market serves real NEAR AI answers over HTTPS, but every seller on it is a persona run by the author. It shows the mechanism, not grading accuracy on outside sellers.</p></li>
       <li data-fade><h3>Provider terms.</h3><p>Many AI providers forbid reselling API access. Each seller answers for its own provider’s terms. Self-hosted open models are the clean case.</p></li>
     </ol>
-    <p class="limits-note" data-fade>Closed on 12 Nov by building: every buyer now checks every answer’s TEE signature, a wrong model loses the seller its claim and part of its bond. Unannounced mystery shoppers re-grade each listing from fresh accounts.</p>
+    <p class="limits-note" data-fade>Closed on 12 Nov by building: every buyer checks every answer’s TEE signature and a wrong model loses the seller its claim and part of its bond. Unannounced mystery shoppers from faucet-funded accounts re-grade each listing with fresh random probes. The grader verifies the Intel TDX quote and NVIDIA GPUs behind every signer itself.</p>
   </div>
 </section>
 

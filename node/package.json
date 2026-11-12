@@ -15,6 +15,7 @@
   "dependencies": {
     "@noble/curves": "^2.4.0",
     "@noble/hashes": "^2.4.0",
+    "@phala/dcap-qvl": "^0.7.1",
     "near-api-js": "^7.5.3"
   },
   "bin": {

@@ -14,8 +14,8 @@ export const FINGERPRINT_PROBES = [
   "In 1879, 42 nautical miles off Reykjavík, the ship 'Þórshöfn' logged 3.14159 knots; Κύριε, Привет, مرحبا, नमस्ते, 안녕하세요, こんにちは.",
 ];
 
-export function fingerprintRequest(model, i) {
-  return { model, messages: [{ role: "user", content: FINGERPRINT_PROBES[i] }], max_tokens: 16, temperature: 0 };
+export function fingerprintRequest(model, i, probes = FINGERPRINT_PROBES) {
+  return { model, messages: [{ role: "user", content: probes[i] }], max_tokens: 16, temperature: 0 };
 }
 
 function rng(seed) {
@@ -53,4 +53,26 @@ export function capabilityTasks(seed) {
 
 export function capabilityRequest(model, task) {
   return { model, messages: [{ role: "user", content: task.prompt }], max_tokens: 2048, temperature: 0 };
+}
+
+const POOL = [
+  "ñandú", "東京", "Þórshöfn", "naïve", "façade", "Привет", "مرحبا", "नमस्ते", "안녕하세요", "こんにちは", "Κύριε", "∑∫√", "⟨tok⟩", "«quoted»",
+  "0x7f3a9", "3.14159", "SELECT * FROM t;", "def f(x):", "{k: v}", "\\t", "🚀", "🧪", "Ωmega", "supercalifragilistic", "kilowatt", "42", "1879",
+  "Reykjavík", "über", "café", "€12.50", "#include <stdio.h>", "=> map(x)", "ℝ²", "½", "Øresund", "İstanbul", "ẞtraße", "ﬁnance",
+];
+
+/**
+ * Three fresh probe texts from a seed. Their token counts are as tokenizer-specific as
+ * the fixed ones, but a seller cannot recognise them, because no two grades share them.
+ * The grader measures their reference at the provider in the same grade.
+ */
+export function randomProbes(seed) {
+  const r = rng(seed ^ 0x5bd1e995);
+  const pick = () => POOL[Math.floor(r() * POOL.length)];
+  return [0, 1, 2].map(() => {
+    const n = 14 + Math.floor(r() * 10);
+    const words = Array.from({ length: n }, pick);
+    words.push(String(Math.floor(r() * 1e12)));
+    return words.join(" ");
+  });
 }

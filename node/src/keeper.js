@@ -178,8 +178,9 @@ export function createKeeper({
         const o = await view("get_order", { order_id: s.orderId }).catch(() => null);
         if (o?.status === "Closed" || Date.now() > s.until + 30 * 60_000) {
           shops.splice(shops.indexOf(s), 1);
-          // Sweep what is left back to the grader and drop the throwaway key.
-          await deleteAccount(s.shopper, grader).then(() => forgetKey(s.shopper)).catch((e) => log(`[keeper] sweep shopper: ${e.message.slice(0, 120)}`));
+          // Grader-funded shoppers are swept back. Faucet-funded ones are left alone:
+          // deleting them into the grader would link them to it after the fact.
+          if (s.funding === "grader") await deleteAccount(s.shopper, grader).then(() => forgetKey(s.shopper)).catch((e) => log(`[keeper] sweep shopper: ${e.message.slice(0, 120)}`));
         }
         continue;
       }
@@ -195,8 +196,9 @@ export function createKeeper({
           if (cl?.status !== "Rejected" || s.suspended) continue;
           const r = await postAuditGrade({ grader, listingId: s.listingId, claim: cl, base: s.report });
           s.suspended = true;
+          if (r.skipped) continue; // the shopper's grade had already suspended it
           listingsCache.at = 0;
-          emit("graded", `listing ${s.listingId} graded F and suspended: it billed a mystery shopper for more tokens than it served (claim ${cid})`, { listing: s.listingId, tier: "F", tx: r.tx, report: r.file, hash: r.hash });
+          emit("graded", `listing ${s.listingId} graded F and suspended: ${r.reason}`, { listing: s.listingId, tier: "F", tx: r.tx, report: r.file, hash: r.hash });
         }
       });
     }
@@ -252,15 +254,15 @@ export function createKeeper({
     }
     if (!/^https?:\/\//.test(l.endpoint) || !(await reachable(l.endpoint))) return backoff(id, `endpoint ${l.endpoint} does not answer`);
     // A graded listing gets a mystery shopper: an ordinary order from a fresh account.
-    let shopper = null;
+    let shopper = null, shopperFunding = null;
     if (l.grade) {
-      try { shopper = (await newShopper(grader)).id; } catch (e) { return backoff(id, `could not fund a mystery shopper: ${e.message.slice(0, 80)}`); }
+      try { ({ id: shopper, funding: shopperFunding } = await newShopper(grader)); } catch (e) { return backoff(id, `could not fund a mystery shopper: ${e.message.slice(0, 80)}`); }
     }
     grading = { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines: [], mystery: !!shopper };
-    emit("grading", shopper ? `mystery-shopper re-grade of listing ${id} (${l.model}) from a fresh account` : `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
+    emit("grading", shopper ? `mystery-shopper re-grade of listing ${id} (${l.model}) from a fresh ${shopperFunding === "testnet faucet" ? "faucet-funded" : "grader-funded"} account` : `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
     try {
       const r = await Promise.race([
-        gradeListing(id, { grader, shopper, log: (line) => { grading.lines.push(String(line).trim()); if (grading.lines.length > 40) grading.lines.shift(); } }),
+        gradeListing(id, { grader, shopper, shopperFunding, log: (line) => { grading.lines.push(String(line).trim()); if (grading.lines.length > 40) grading.lines.shift(); } }),
         sleep(gradeTimeoutMs).then(() => { throw new Error("grading timed out"); }),
       ]);
       day.grades++;
@@ -269,7 +271,7 @@ export function createKeeper({
       const idx = wanted.indexOf(id);
       if (idx >= 0) wanted.splice(idx, 1);
       const d = r.report.decision;
-      if (shopper) shops.push({ shopper, orderId: String(r.orderId), listingId: id, report: r.file, until: Date.now() + 5 * 60_000, disputed: new Set() });
+      if (shopper) shops.push({ shopper, funding: shopperFunding, orderId: String(r.orderId), listingId: id, report: r.file, until: Date.now() + 5 * 60_000, disputed: new Set() });
       emit("graded", `listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
     } catch (e) {
       backoff(id, e.message.slice(0, 160));
