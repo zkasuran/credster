@@ -119,6 +119,7 @@ function stateOf(l) {
 async function loadListings() {
   S.listings = await S.near.viewAll("get_listings"); // closed ones too: old orders still point at them
   renderSellers();
+  renderStatus();
   renderLaunches();
 }
 
@@ -126,13 +127,14 @@ function renderSellers() {
   const el = $("[data-sellers]");
   const rank = (l) => (tradable(l) ? { A: 0, B: 1, C: 2 }[l.grade.tier] : l.status === "Active" ? 3 : l.status === "Paused" ? 4 : 5);
   const mine = new Set(S.launches.map((x) => String(x.listing_id)));
-  const rows = S.listings.filter((l) => l.status !== "Closed").sort((a, b) => rank(a) - rank(b) || Number(b.id) - Number(a.id)).map((l) => {
+  const open = S.listings.filter((l) => l.status !== "Closed").sort((a, b) => rank(a) - rank(b) || Number(b.id) - Number(a.id));
+  const row = (l) => {
     const h = S.hosted.get(String(l.id));
     const can = tradable(l);
     const [cls, text] = stateOf(l);
-    const tag = mine.has(String(l.id)) ? `<span class="tag mine">you launched this</span>` : h ? (HONEST.has(h.persona) ? `<span class="tag honest">${esc(h.title)}</span>` : `<span class="tag cheat">cheats on purpose: ${esc(h.title)}</span>`) : "";
+    const tag = mine.has(String(l.id)) ? `<span class="tag mine">your demo seller</span>` : h ? (HONEST.has(h.persona) ? `<span class="tag honest">demo seller</span>` : `<span class="tag demo">demo · ${esc(h.title.toLowerCase())}</span>`) : "";
     const ready = can && S.wallet && S.balance > parseNear("0.012");
-    const why = !can ? "This listing can't be bought right now" : !S.wallet ? "Get test NEAR first (step 1)" : !(S.balance > parseNear("0.012")) ? "Your account needs test NEAR" : "";
+    const why = !can ? "This listing can't be bought right now" : !S.wallet ? "Fund your account first (step 1)" : !(S.balance > parseNear("0.012")) ? "Your account needs test NEAR" : "";
     const rep = l.grade ? `<button type="button" class="rep" data-rep="${l.id}">${S.reports.get(String(l.id))?.ok === true ? "report ✓" : "verify report"}</button>` : "";
     return `<li class="srow ${can ? "" : "is-off"} ${S.selected === String(l.id) ? "is-sel" : ""}">
       ${mark(l.grade?.tier)}
@@ -143,8 +145,12 @@ function renderSellers() {
       <div class="s-act"><span class="s-ask">${perM(l.ask_in)} in · ${perM(l.ask_out)} out / 1M</span>
         <button type="button" class="btn btn-xs ${can ? "btn-gold" : "btn-ghost"}" data-buy="${esc(l.id)}" ${ready ? "" : `disabled title="${esc(why)}"`}>${can ? "Buy" : "Can't buy"}</button></div>
     </li>`;
-  });
-  el.innerHTML = rows.join("") || `<li class="empty">No open listings on ${esc(S.contract)}.</li>`;
+  };
+  const live = open.filter((l) => l.status !== "Suspended");
+  const off = open.filter((l) => l.status === "Suspended");
+  const wasOpen = el.querySelector("details.off-list")?.open ? "open" : "";
+  el.innerHTML = (live.map(row).join("") || `<li class="empty">No listings for sale on ${esc(S.contract)} right now.</li>`)
+    + (off.length ? `<li class="off-wrap"><details class="off-list" ${wasOpen}><summary>${off.length} listing${off.length > 1 ? "s" : ""} suspended after failing grading</summary><ol class="sellers">${off.map(row).join("")}</ol></details></li>` : "");
 }
 
 async function verifyReport(l) {
@@ -176,13 +182,13 @@ async function pollStatus() {
 function renderStatus() {
   const st = S.status;
   const k = st?.keeper;
+  const forSale = S.listings.filter((l) => tradable(l)).length;
   const chips = [
-    st ? `<li class="chip"><span class="dot ${k && Date.now() - k.last_settle_at < 60_000 ? "ok" : "wait"}"></span>Live server <b>${esc(location.host === new URL(st.public_url).host ? "this site" : new URL(st.public_url).host)}</b></li>`
-      : `<li class="chip"><span class="dot bad"></span>No live server here: the faucet and launches are off. Read-only.</li>`,
-    `<li class="chip"><span class="dot ok"></span>Contract <a href="${NB}/address/${esc(S.contract)}" target="_blank" rel="noopener">${esc(S.contract)}</a></li>`,
-    st ? `<li class="chip">Grader <b>${esc(short(st.grader))}</b></li>` : "",
+    st ? `<li class="chip"><span class="dot ${k && Date.now() - k.last_settle_at < 60_000 ? "ok" : "wait"}"></span>Market open</li>`
+      : `<li class="chip"><span class="dot bad"></span>Read-only: the live server is not reachable from this page</li>`,
+    S.listings.length ? `<li class="chip"><b>${forSale}</b> listing${forSale === 1 ? "" : "s"} for sale</li>` : "",
     k?.grading ? `<li class="chip"><span class="dot wait"></span>Grading listing <b>#${esc(k.grading.listing)}</b></li>` : "",
-    `<li class="chip">Challenge window <b>${esc(S.cfg?.challenge_window_sec ?? "?")} s</b></li>`,
+    `<li class="chip">Contract <a href="${NB}/address/${esc(S.contract)}" target="_blank" rel="noopener">${esc(S.contract)}</a></li>`,
   ];
   $("[data-status]").innerHTML = chips.join("");
 }
@@ -652,11 +658,11 @@ function renderSell() {
     el.innerHTML = `<p class="lcard-note">${S.status ? "Launching sellers is off on this server." : "Launching a seller needs the live server."} To sell from your own machine, see the guide below.</p>`;
     return;
   }
-  const sel = el.querySelector("input[name=persona]:checked")?.value || "swap";
-  el.innerHTML = `<p class="lcard-note">Pick how the seller behaves. The server creates a seller account, posts its 0.2 NEAR bond, lists it and starts its node. Then the grader buys a trial order and probes it, usually within a minute. Launched sellers retire after ${esc(l.ttl_min)} min.</p>
+  const sel = el.querySelector("input[name=persona]:checked")?.value || "honest";
+  el.innerHTML = `<p class="lcard-note">No AI account handy? Start a seller on this server in one click. It gets its own NEAR account, posts its bond and lists a model. The grader checks it within about a minute. Choose an honest seller to see a listing go live. Choose one that cuts corners to see what grading does to it. Demo sellers retire after ${esc(l.ttl_min)} min.</p>
     <div class="personas" role="radiogroup" aria-label="Seller behaviour">${Object.entries(l.personas).map(([k, p]) => `
       <label class="pick"><input type="radio" name="persona" value="${esc(k)}" ${k === sel ? "checked" : ""}><b>${esc(p.title)}</b><p>${esc(p.blurb)}</p><em>Expect: ${esc(p.expect)}</em></label>`).join("")}</div>
-    <div class="sell-go"><button type="button" class="btn btn-gold btn-sm" data-launch ${l.active >= l.max ? "disabled" : ""}>Launch this seller<svg><use href="#i-arrow"/></svg></button><p>${esc(l.active)} of ${esc(l.max)} launch slots in use</p></div>
+    <div class="sell-go"><button type="button" class="btn btn-gold btn-sm" data-launch ${l.active >= l.max ? "disabled" : ""}>Start this seller<svg><use href="#i-arrow"/></svg></button><p>${esc(l.active)} of ${esc(l.max)} demo seller slots in use</p></div>
     <ol class="launches" data-launches></ol>`;
   renderLaunches();
 }
@@ -715,6 +721,12 @@ function renderCli() {
     ["", `node src/cli.js buy-spot --buyer ${me} --listing ${pick} --deposit 0.02`],
     ["", `node src/cli.js chat --buyer ${me} --order <order> --prompt "hello"`],
     ["", `node src/cli.js audit --buyer ${me} --order <order> --dispute`],
+    ["c", ""],
+    ["c", "# sell: put a seller node in front of your own AI account (the key stays here)"],
+    ["", "cloudflared tunnel --url http://localhost:8701   # gives you a public https URL"],
+    ["", `node src/cli.js seller-list --name mine --seller ${me} --model Qwen/Qwen3.8-27B \\`],
+    ["", "  --endpoint https://<your-tunnel>/v1 --ask-in 0.08 --ask-out 0.30 --bond 0.2"],
+    ["", "TS_UPSTREAM_KEY=<your NEAR AI key> node src/cli.js seller-serve --name mine --port 8701"],
   ];
   $("[data-cli]").innerHTML = lines.map(([c, t]) => (c ? `<span class="c">${esc(t)}</span>` : esc(t))).join("\n");
 }

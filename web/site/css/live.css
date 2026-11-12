@@ -267,3 +267,18 @@
   .steps a { flex-direction: column; gap: 6px; padding: 8px 4px; font-size: 11px; text-align: center; }
   .sell-card .personas, .sell-card .launches { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------------------------------------------------------------- market framing */
+.intro-sm { font-size: 14.5px; color: var(--ink-3); margin-top: 10px; }
+.tag.demo { color: var(--ink-3); border-color: var(--line-2); background: rgba(255, 255, 255, 0.02); }
+.off-wrap { list-style: none; padding-top: 6px; }
+.off-list summary { cursor: pointer; padding: 12px 4px; font-size: 13.5px; color: var(--ink-3); }
+.off-list summary:hover { color: var(--ink-2); }
+.off-list .sellers { opacity: .85; }
+.how-sell { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 16px; padding: 0; list-style: none; }
+.how-sell li { padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, 0.015); }
+.how-sell span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(217, 180, 90, 0.55); color: var(--gold, #d9b45a); font: 500 12px/1 var(--mono); margin-right: 10px; }
+.how-sell b { font-weight: 500; font-size: 16px; }
+.how-sell p { margin-top: 8px; color: var(--ink-3); font-size: 14px; line-height: 1.55; }
+.sell-card .lcard-head h2 { font-size: 1.6rem; }
+@media (max-width: 760px) { .how-sell { grid-template-columns: minmax(0, 1fr); } }

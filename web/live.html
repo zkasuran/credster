@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Credster live: buy AI credits, catch a cheat</title>
-<meta name="description" content="Trade on the Credster market on NEAR testnet from your browser: buy graded AI inference, check every signed receipt, dispute an overclaim, or launch a cheating seller and watch the grader catch it.">
+<title>Credster market: buy and sell spare AI credits on NEAR</title>
+<meta name="description" content="Buy AI inference from people with credits to spare: at the ask, by the token or by making an offer. Sell your own. Every seller is graded and every answer carries a signed receipt. Live on NEAR testnet.">
 <meta name="theme-color" content="#08090b">
 <!-- Address of the Credster live server. Leave empty when this page is served by it. -->
 <meta name="credster-api" content="https://credster.store">
-<meta property="og:title" content="Credster live: buy AI credits, catch a cheat">
+<meta property="og:title" content="Credster market: buy and sell spare AI credits on NEAR">
 <meta property="og:image" content="https://raw.githubusercontent.com/zkasuran/credster/master/web/site/media/og.jpg">
 <link rel="icon" href="site/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="site/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -54,55 +54,56 @@
 
 <main id="app">
   <section class="live-hero wrap">
-    <p class="label">Live on NEAR testnet</p>
-    <h1 class="live-title">Buy some credits. <em class="gold-text">Catch a cheat.</em></h1>
-    <p class="intro">This page trades on the real Credster contract, with real seller nodes and a real grader. Your browser checks every signed receipt. You pay with free test NEAR from a throwaway account the page creates, so there is nothing to install and no wallet to connect.</p>
+    <p class="label">Credster market · NEAR testnet</p>
+    <h1 class="live-title">Spare AI credits, <em class="gold-text">traded on NEAR.</em></h1>
+    <p class="intro">Buy inference from people who have more than they use. Pay at the seller's ask, run a pay-as-you-go tab or make an offer and bargain. Every seller is graded before it can sell. Every answer comes with a signed receipt, so you pay for the model you asked for and the tokens you used.</p>
+    <p class="intro intro-sm">This is the live testnet market. The page gives you a throwaway account with free test NEAR, so there is no wallet to connect and nothing to install.</p>
     <ul class="status-row" data-status aria-live="polite">
       <li class="chip"><span class="dot wait"></span>Connecting…</li>
     </ul>
-    <nav class="paths" aria-label="Two ways to try it">
-      <a class="path" href="#buy"><span class="path-k">Buyer</span><b>Buy credits from a graded seller</b><span>Get test NEAR, buy, chat, then check the seller's bill against your receipts.</span><svg><use href="#i-arrow"/></svg></a>
-      <a class="path" href="#sell"><span class="path-k">Seller</span><b>Launch a seller that cheats</b><span>Pick a cheat, and watch the grader probe it and post a grade within about a minute.</span><svg><use href="#i-arrow"/></svg></a>
+    <nav class="paths" aria-label="Buy or sell">
+      <a class="path" href="#buy"><span class="path-k">Buy</span><b>Buy AI credits</b><span>Choose a model and a price, pay the way you like and use the credits right here.</span><svg><use href="#i-arrow"/></svg></a>
+      <a class="path" href="#sell"><span class="path-k">Sell</span><b>Sell your spare credits</b><span>List a model you can serve, set your price, get graded and get paid per answer.</span><svg><use href="#i-arrow"/></svg></a>
     </nav>
   </section>
 
   <!-- Buyer path -->
   <section class="live-section wrap" id="buy" aria-labelledby="h-buy">
     <header class="section-head">
-      <p class="label">Buyer</p>
-      <h2 id="h-buy">Buy, use and audit AI credits</h2>
+      <p class="label">Buy</p>
+      <h2 id="h-buy">Buy AI credits</h2>
     </header>
     <ol class="steps" data-steps aria-label="Progress">
-      <li><a href="#wallet"><span>1</span>Get test NEAR</a></li>
-      <li><a href="#sellers"><span>2</span>Pick a seller</a></li>
-      <li><a href="#order"><span>3</span>Open an order</a></li>
-      <li><a href="#chat"><span>4</span>Use it</a></li>
-      <li><a href="#bill"><span>5</span>Check the bill</a></li>
+      <li><a href="#wallet"><span>1</span>Fund your account</a></li>
+      <li><a href="#sellers"><span>2</span>Choose a listing</a></li>
+      <li><a href="#order"><span>3</span>Choose how to pay</a></li>
+      <li><a href="#chat"><span>4</span>Use your credits</a></li>
+      <li><a href="#bill"><span>5</span>Check your bill</a></li>
     </ol>
 
     <div class="live-grid">
       <div class="col-main">
         <article class="lcard" id="wallet" aria-labelledby="h-wallet">
-          <header class="lcard-head"><span class="step-dot">1</span><h2 id="h-wallet">Get test NEAR</h2></header>
+          <header class="lcard-head"><span class="step-dot">1</span><h2 id="h-wallet">Fund your account</h2></header>
           <div data-wallet></div>
         </article>
 
         <article class="lcard" id="sellers" aria-labelledby="h-sellers">
           <header class="lcard-head">
-            <span class="step-dot">2</span><h2 id="h-sellers">Pick a seller</h2>
+            <span class="step-dot">2</span><h2 id="h-sellers">Choose a listing</h2>
             <button type="button" class="icon-btn" data-refresh-listings aria-label="Refresh listings"><svg><use href="#i-refresh"/></svg></button>
           </header>
-          <p class="lcard-note">The grader buys a trial order on every listing and probes it before anyone can trade. Sellers marked <b>cheats on purpose</b> run on this server so you can see what happens to them.</p>
+          <p class="lcard-note">Each listing is one seller's endpoint for one model, at that seller's price per million tokens. Before a listing can sell, the grader buys from it like a customer and checks that it serves the model it names and bills honest token counts. The grade, A to F, is on chain.</p>
           <ol class="sellers" data-sellers><li class="empty">Loading listings…</li></ol>
         </article>
 
         <article class="lcard" id="order" aria-labelledby="h-order" hidden>
-          <header class="lcard-head"><span class="step-dot">3</span><h2 id="h-order">Open an order</h2></header>
+          <header class="lcard-head"><span class="step-dot">3</span><h2 id="h-order">Choose how to pay</h2></header>
           <div data-order></div>
         </article>
 
         <article class="lcard" id="chat" aria-labelledby="h-chat" hidden>
-          <header class="lcard-head"><span class="step-dot">4</span><h2 id="h-chat">Use it</h2><span class="lcard-meta" data-chat-meta></span></header>
+          <header class="lcard-head"><span class="step-dot">4</span><h2 id="h-chat">Use your credits</h2><span class="lcard-meta" data-chat-meta></span></header>
           <div class="budget" data-budget></div>
           <ol class="convo" data-convo aria-live="polite"></ol>
           <form class="composer" data-composer>
@@ -115,7 +116,7 @@
 
         <article class="lcard" id="bill" aria-labelledby="h-bill" hidden>
           <header class="lcard-head">
-            <span class="step-dot">5</span><h2 id="h-bill">Check the bill</h2>
+            <span class="step-dot">5</span><h2 id="h-bill">Check your bill</h2>
             <label class="switch"><input type="checkbox" data-auto-dispute checked><span>Auto-dispute</span></label>
           </header>
           <div data-bill></div>
@@ -125,7 +126,7 @@
       <aside class="col-side" aria-label="Live market activity">
         <article class="lcard activity-card" id="activity" aria-labelledby="h-activity">
           <header class="lcard-head"><span class="live-dot" aria-hidden="true"></span><h2 id="h-activity">Market activity</h2></header>
-          <p class="lcard-note">What the keeper does on chain right now: grades, paid claims, disputes, refunds. Your own orders show up here too.</p>
+          <p class="lcard-note">Trades settling on chain right now: new grades, payments to sellers, refunds to buyers. Yours are highlighted.</p>
           <ol class="events" data-events aria-live="polite"><li class="empty">Waiting for the keeper…</li></ol>
         </article>
       </aside>
@@ -135,10 +136,16 @@
   <!-- Seller path -->
   <section class="live-section wrap" id="sell" aria-labelledby="h-sell">
     <header class="section-head">
-      <p class="label">Seller</p>
-      <h2 id="h-sell">Launch a seller and watch it get graded</h2>
+      <p class="label">Sell</p>
+      <h2 id="h-sell">Sell your spare AI credits</h2>
     </header>
+    <ol class="how-sell">
+      <li><span>1</span><b>List</b><p>Run a seller node in front of your own AI account, name the model and set your price. Post a 0.2 NEAR bond. Your API key never leaves your machine.</p></li>
+      <li><span>2</span><b>Get graded</b><p>The grader buys a trial order and checks your endpoint. A passing grade puts your listing on the market. It is re-checked before it goes stale.</p></li>
+      <li><span>3</span><b>Get paid</b><p>Your node signs a receipt for every answer and claims the tokens on chain. After a 60-second window, the contract pays you. Unused deposits go back to buyers.</p></li>
+    </ol>
     <article class="lcard sell-card">
+      <header class="lcard-head"><h2>Try it with a demo seller</h2></header>
       <div data-sell></div>
     </article>
   </section>
@@ -148,8 +155,8 @@
     <article class="lcard terminal-card">
       <div class="terminal-text">
         <p class="label">Command line</p>
-        <h2 id="h-cli">Prefer a terminal?</h2>
-        <p class="lcard-note">The same market from the command line, with your own testnet account. The CLI can also sell from your own machine with your own NEAR AI key.</p>
+        <h2 id="h-cli">Buy or sell from a terminal</h2>
+        <p class="lcard-note">Buy from the command line with your own testnet account. Or sell for real: run a seller node in front of your own AI account and list it.</p>
         <a class="tx" href="https://github.com/zkasuran/credster/blob/master/JUDGING.md">Full judging guide<svg><use href="#i-out"/></svg></a>
       </div>
       <pre class="cli" data-cli></pre>
@@ -160,7 +167,7 @@
 <footer class="foot">
   <div class="wrap foot-inner">
     <div class="foot-brand"><svg class="mark"><use href="#i-mark"/></svg><div><b>Credster</b><span>NEAR testnet. Test NEAR has no value.</span></div></div>
-    <p class="foot-disc">Your throwaway account's key is kept in this browser's local storage and never sent anywhere. Each order gets its own key, and every request to a seller is signed with it. Answers come from NEAR AI Cloud through the seller nodes, and each one carries a receipt signed by the node.</p>
+    <p class="foot-disc">Your throwaway account's key is kept in this browser's local storage and never sent anywhere. Each order gets its own key. Every request to a seller is signed with it. Answers come from NEAR AI Cloud through the seller nodes. Each one carries a receipt signed by the node.</p>
     <nav class="foot-links" aria-label="Footer"><a href="./">The story</a><a href="market.html" data-dash>Dashboard</a><a href="https://github.com/zkasuran/credster">GitHub</a></nav>
   </div>
 </footer>
