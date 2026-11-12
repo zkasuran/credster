@@ -18,6 +18,8 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 .brand { display: flex; gap: 14px; align-items: center; }
 .mark { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, #2b2f36 0 50%, var(--gold) 50% 100%); box-shadow: inset 0 0 0 1px #ffffff22; }
 h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+h1 .home { color: inherit; text-decoration: none; }
+h1 .home:hover { color: var(--gold); }
 .tag { margin: 0; color: var(--muted); font-size: 14px; }
 .net { display: flex; gap: 8px; align-items: center; }
 .net label { color: var(--muted); font-size: 13px; }

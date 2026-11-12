@@ -62,7 +62,7 @@ The three F listings were suspended. Buying from them was refused (`listing grad
 1. `cd node && npm install && npm test`: 19 tests (fingerprint rules, tiers, receipts, request signatures, EIP-191 recovery of a real NEAR AI signature, price math).
 2. `cd contract && cargo test`: 24 tests of the market rules (grading gates, spot, tab ceilings, bargaining limits, disputes and slashing, refunds, unpaid probe usage on F listings).
 3. `cd node && TS_CONTRACT=market.credster-68480.testnet node src/cli.js verify-reports`: reads all 12 grades from the testnet contract and checks that each report file in `web/reports/` hashes to the `report_hash` on chain.
-4. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080. The page reads the testnet contract straight from NEAR RPC. Click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain.
+4. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080/market.html for the dashboard. It reads the testnet contract straight from NEAR RPC. Click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain. http://127.0.0.1:8080 is the landing page; its **Verify all reports** button runs the same check for all 12 grades.
 
 ![A grade F report for the inflate seller: the report hash matches the chain, observed token counts 95, 85, 100 against the reference 70, 63, 74, scaled by 1.353](assets/report-F.png)
 
@@ -155,13 +155,16 @@ sequenceDiagram
 | `node/src/buyer.js` | buyer client: orders, signed calls, receipt audit, disputes |
 | `node/src/agents.js` | bargaining and pricing agents |
 | `node/fingerprints.json` | reference token counts measured from NEAR AI Cloud |
-| `web/` | static dashboard and the published grade reports |
+| `web/index.html`, `web/site/` | landing page: the testnet run, live stats and in-browser report verification |
+| `web/market.html` | static dashboard of listings, offers, orders and claims |
+| `web/reports/` | the published grade reports |
 | `scripts/` | `setup-testnet.sh`, `demo.mjs`, `cleanup.mjs`, `shoot.py` |
 | `docs/RULES.md`, `docs/DEDUPE.md` | market rules; comparison with the other 649 submissions |
 
 ## Disclosures
 
-- **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, Playwright (screenshots only).
+- **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, Playwright (screenshots only). The landing page vendors GSAP 3.15 with ScrollTrigger and SplitText (GSAP standard no-charge license), Lenis 1.3 (MIT) and the fonts Instrument Serif, Inter Tight and JetBrains Mono (SIL OFL) in `web/site/`.
 - **AI assistance:** the code and docs were written with an AI coding agent, directed and reviewed by the author.
+- **Generated media:** the landing page's photographs were made with Gemini 3 Pro Image and GPT Image 2.5, and its video loops with Kling 3.0 image-to-video, all through GMI Cloud. They are illustrations; every number on the page comes from the testnet run or from live RPC.
 
 License: MIT.
