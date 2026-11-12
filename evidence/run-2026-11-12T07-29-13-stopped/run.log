@@ -1,0 +1,77 @@
+# Credster end-to-end run 2026-11-12T07:29:13.350Z
+contract market.credster-68480.testnet
+
+## 1. Six sellers list an endpoint and post a 0.2 NEAR bond
+  listing 0 honest    claims Qwen/Qwen3.8-27B at 0.08/0.30 NEAR per 1M (node mode: honest) tx 5hZ5bdVed3JSxU1gP8PkrVFp23bfad7oJuBkFfmCTsNS
+  listing 1 swap      claims Qwen/Qwen3.8-27B at 0.05/0.20 NEAR per 1M (node mode: swap -> Qwen/Qwen3.6-35B-A3B-FP8) tx 7Vhk8CHkARCU4jWL1ApoiaFPVPrbrFTQ4rPoc6TFfXv
+  listing 2 sibling   claims Qwen/Qwen3.8-27B at 0.06/0.24 NEAR per 1M (node mode: swap -> Qwen/Qwen3.8-27B-abliterated) tx 9uNJ7iqPm4nKnRogBMSJwKFwwpN3xZrfJxsrd7zhvsH8
+  listing 3 inflate   claims z-ai/glm-5.3-flash at 0.03/0.12 NEAR per 1M (node mode: inflate) tx 6HTLUeahKe7HybTkXE69QUX3FfBojdJJQVtpKVnHaAnv
+  listing 4 deepseek  claims deepseek/deepseek-v4.1-flash at 0.03/0.12 NEAR per 1M (node mode: honest) tx 2ZtB7D2snSyTjkGMPjUppK1ShEyCPbz59YNw9nAGjSzG
+  listing 5 overclaim claims z-ai/glm-5.3-flash at 0.025/0.10 NEAR per 1M (node mode: overclaim) tx 5AywUn35xNTAfoJLubJcJ2CQesiB1i6b8YnmcopcBYV2
+
+## 2. An ungraded listing only takes small trial orders
+  refused as expected: listing not graded: only a trial order up to trial_cap
+
+## 3. The grader buys a trial order on each listing and probes it
+grading listing 0: Qwen/Qwen3.8-27B at http://127.0.0.1:8711/v1 (seller s-honest.credster-68480.testnet)
+  trial order 0 (0.050000 NEAR) tx E1cbg3vUTsTkrLv3x7ritbrAZbPUzhXHdbCn6k7Zk51Y
+  fingerprint observed [117,103,110] reference [117,103,110] -> match (matches Qwen/Qwen3.8-27B, Qwen/Qwen3.8-27B-abliterated)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation verified
+  tier A score 100; report sha256 fb5fef8c6c02aa61428b7131e48149930cd8eb4d76900c25fbfc7f599613293e
+  posted grade tx 8pLdZ7NU2GRTzubyxjLgGa89zjcoD3CTgemFReYSgVyc
+grading listing 1: Qwen/Qwen3.8-27B at http://127.0.0.1:8712/v1 (seller s-swap.credster-68480.testnet)
+  trial order 1 (0.050000 NEAR) tx 7zKHrYwYkud7MQrYm6428B91vrxjEt4k1UeHRcBe7Nks
+  fingerprint observed [75,61,68] reference [117,103,110] -> mismatch (matches Qwen/Qwen3.6-35B-A3B-FP8)
+  capability multiply:ok reverse:x sort:ok count:ok = 75%
+  attestation contradicts: a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B
+  tier F score 15 (token counts do not match the claimed model; they match Qwen/Qwen3.6-35B-A3B-FP8; a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B); report sha256 79caf66c2ae9fb7570f461342d7b660eac6f8961b5ead30a4667628659c3d181
+  posted grade tx DzmScnrTFF1xExkAtu2Zbj4amMjvESmnRp2bsMFSAs7k
+grading listing 2: Qwen/Qwen3.8-27B at http://127.0.0.1:8713/v1 (seller s-sibling.credster-68480.testnet)
+  trial order 2 (0.050000 NEAR) tx EvTo1ZMa7EBWFuZqcnXnmawtDo2Ei39nsYBpX63QHY65
+  fingerprint observed [117,103,110] reference [117,103,110] -> match (matches Qwen/Qwen3.8-27B, Qwen/Qwen3.8-27B-abliterated)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation contradicts: a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B
+  tier F score 20 (a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B); report sha256 68c373feaf93965cc92c75a768806218e58b5140ef66fd923519f93871132571
+  posted grade tx GMVDqSqwCuQAp7VaPmwdEQcGLHLN1iqkNs2BiWDuVAX9
+grading listing 3: z-ai/glm-5.3-flash at http://127.0.0.1:8714/v1 (seller s-inflate.credster-68480.testnet)
+  trial order 3 (0.050000 NEAR) tx 6fPEyVFdgkPtsj7sKpbJXAvTNPFWjfpJSrVWGeWD1ESw
+  fingerprint observed [95,85,100] reference [70,63,74] -> scaled
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation unavailable: the signed response bytes differ from the bytes we received (the seller changed the answer)
+  tier F score 20 (usage is 1.353x the claimed model's token counts); report sha256 2389466ae50667246f9b520dbb006dee338ba14de2967cb0b13cb66681b4437f
+  posted grade tx 8yWr59HDU5QK9A8tZJoqPZ6pXXeXMGaGbM59tKA16Ghh
+grading listing 4: deepseek/deepseek-v4.1-flash at http://127.0.0.1:8715/v1 (seller s-deepseek.credster-68480.testnet)
+  trial order 4 (0.050000 NEAR) tx 66KY68Z3X9p86e7q6sPbkTDVCkpjtmGiPh6Q1QuzBrEz
+  fingerprint observed [80,85,90] reference [80,85,90] -> match (matches deepseek/deepseek-v4.1-flash)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation unavailable: the signature does not name the claimed model and our bytes
+  tier B score 80; report sha256 f9b5f10d8a47543d3f82d3b7c6f39e114a775fc2cf6ac1dcb9807bdcfac86584
+  posted grade tx 2ayJu6bwxcTFAP3aw8mFYtfsjnVntwQfVkvNYZrFbs5H
+grading listing 5: z-ai/glm-5.3-flash at http://127.0.0.1:8716/v1 (seller s-overclaim.credster-68480.testnet)
+  trial order 5 (0.050000 NEAR) tx 8BzFC7DnFdhf2fKqozAspLzZrUpkXDNaV1EPFgtsHheR
+  fingerprint observed [70,63,74] reference [70,63,74] -> match (matches z-ai/glm-5.3-flash, z-ai/glm-5.3)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation verified
+  tier A score 100; report sha256 e1cd3a9364280eaac93fedd5187a123874b8b1b6b8c69ca4f4eecc2e45184cf4
+  posted grade tx HUWMs3JmQruR7ChksDXfYHF9FjcdUJ9Nkp7TZtJYyLJw
+
+  grades: honest=A swap=F sibling=F inflate=F deepseek=B overclaim=A
+  the contract will not pay probe usage on the three F listings (checked in step 11)
+
+## 4. F-graded listings are suspended
+  refused as expected: listing graded F
+
+## 5. Spot: Alice buys 0.1 NEAR of Qwen/Qwen3.8-27B at the honest seller's ask
+  order 6 tx E68asMiZk99JkWCoo8s7tzS4htMjgoDSfRYdjWKm9Zhu
+  answer (28687 ms, receipt verified: 64 in / 1160 out): A NEAR sub-account is a separate NEAR account that is linked to and controlled by a parent account, allowing funds, apps, or permissions to 
+  answer (9197 ms, receipt verified: 69 in / 665 out): - Authorize another account or app to call only selected methods of a specified smart contract on your behalf. - Limit the balance or allowa
+
+## 6. The seller's pricing rule raises the ask after demand; the spot order keeps its price
+  ask 0.0800/0.3000 -> 0.0880/0.3300 tx 7FrRddJgMWN4HigFivvhwZrzjvdSRJd1La19sLBg5dZr
+
+## 7. On-demand: Bob opens a tab on deepseek with a ceiling of 0.15 per 1M output
+  tab order 7 tx rPTwCnPoFAjWtwK4MiSsUwfcpoRy4ZFpGV26KWDesio
+  answer (3610 ms, receipt verified): Metered AI usage needs signed receipts so that every billable unit can be independently verified and attributed, preventing disputes and tam
+  deepseek seller raises its output ask to 0.30, above Bob's ceiling tx DHYwZ8LdMW4NWkY1TPuYNAZoF2EpbEBNb4FCRLNNhAt4
+  answer (receipt verified): A price ceiling protects consumers by preventing the price of a good or service from rising above a set maximum, aiming 

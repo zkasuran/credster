@@ -1,0 +1,510 @@
+{
+  "started_at": "2026-11-12T07:50:17.638Z",
+  "contract": "market.credster-68480.testnet",
+  "steps": [
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:21.125Z",
+      "seller": "honest",
+      "listing": "6",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "honest",
+      "served": "Qwen/Qwen3.8-27B",
+      "tx": "EhMi8GVBdF3CcV7FB2t5yNVhyamhvVYyxvg56jCm4yZV"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:25.501Z",
+      "seller": "swap",
+      "listing": "7",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "swap",
+      "served": "Qwen/Qwen3.6-35B-A3B-FP8",
+      "tx": "2oYrCKdDzY8M4nrPcFs9Spt5tAkuHT1k7jRHJHiSy1Ce"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:29.545Z",
+      "seller": "sibling",
+      "listing": "8",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "swap",
+      "served": "Qwen/Qwen3.8-27B-abliterated",
+      "tx": "68DUB8b51sRrP3UHivztLiozSMEmGtVVaUNzDZ5zmYVq"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:33.842Z",
+      "seller": "inflate",
+      "listing": "9",
+      "model": "z-ai/glm-5.3-flash",
+      "mode": "inflate",
+      "served": "z-ai/glm-5.3-flash",
+      "tx": "4qcYpcTyzBxXZDTm2g3fkUMtYypn9c7naivvLjhJuMLB"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:37.927Z",
+      "seller": "deepseek",
+      "listing": "10",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "mode": "honest",
+      "served": "deepseek/deepseek-v4.1-flash",
+      "tx": "8Xg8Wb5LtPDAmuKJNXH4LJHA3ZWDMm8SrjWk5fXGmzuK"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:50:41.998Z",
+      "seller": "overclaim",
+      "listing": "11",
+      "model": "z-ai/glm-5.3-flash",
+      "mode": "overclaim",
+      "served": "z-ai/glm-5.3-flash",
+      "tx": "7qEecfsGhUsVP2TvUJMJHtSxLvmx9Jsn3navPG2zr3C2"
+    },
+    {
+      "name": "ungraded_refused",
+      "at": "2026-11-12T07:50:46.741Z",
+      "reason": "listing not graded: only a trial order up to trial_cap"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:51:41.050Z",
+      "seller": "honest",
+      "listing": "6",
+      "tier": "A",
+      "score": 100,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          117,
+          103,
+          110
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "Qwen/Qwen3.8-27B",
+          "Qwen/Qwen3.8-27B-abliterated"
+        ]
+      },
+      "attestation": "verified",
+      "report": "listing-6-1794469890126.json",
+      "report_sha256": "7703bcd980719edee34e63b8617bc61706fca71eaba0ac598ef0046fc250d05a",
+      "tx": "ACdqxU4wJayoRoagrN3tdMquNzoQG6LnfBThDV2xdZRM"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:52:10.843Z",
+      "seller": "swap",
+      "listing": "7",
+      "tier": "F",
+      "score": 15,
+      "reasons": [
+        "token counts do not match the claimed model; they match Qwen/Qwen3.6-35B-A3B-FP8",
+        "a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B"
+      ],
+      "fingerprint": {
+        "observed": [
+          75,
+          61,
+          68
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "mismatch",
+        "factor": 0.617,
+        "looks_like": [
+          "Qwen/Qwen3.6-35B-A3B-FP8"
+        ]
+      },
+      "attestation": "contradicts",
+      "report": "listing-7-1794469918695.json",
+      "report_sha256": "8305897e157bcc21f77c0b8c5481feb3189bf56aa140d15b364cc902939e19a4",
+      "tx": "85gdGXZkMS7VnxDiTgdooGu3oov9CHppsT1Zd52Hg9Dd"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:52:48.871Z",
+      "seller": "sibling",
+      "listing": "8",
+      "tier": "F",
+      "score": 20,
+      "reasons": [
+        "a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B"
+      ],
+      "fingerprint": {
+        "observed": [
+          117,
+          103,
+          110
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "Qwen/Qwen3.8-27B",
+          "Qwen/Qwen3.8-27B-abliterated"
+        ]
+      },
+      "attestation": "contradicts",
+      "report": "listing-8-1794469957316.json",
+      "report_sha256": "f3f6ffc78f95a340f38df4e9afa26282ff017944076641daa2df75d3bbcd7a76",
+      "tx": "9ENZerfepdpkbKoaTvxax2cdKZGHkWjK8ejViXy6pYkd"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:53:56.169Z",
+      "seller": "inflate",
+      "listing": "9",
+      "tier": "F",
+      "score": 20,
+      "reasons": [
+        "usage is 1.353x the claimed model's token counts"
+      ],
+      "fingerprint": {
+        "observed": [
+          95,
+          85,
+          100
+        ],
+        "reference": [
+          70,
+          63,
+          74
+        ],
+        "verdict": "scaled",
+        "factor": 1.353,
+        "looks_like": []
+      },
+      "attestation": "unavailable",
+      "report": "listing-9-1794470023483.json",
+      "report_sha256": "ba7605c13b54263a54ec3dfeaa5eae351d42ba10664f51ad0e9b115a201bec5e",
+      "tx": "GRGADUiMuE91YEmTY49Rr6ACR3tWmt1Fktz59atw4yEE"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:54:28.915Z",
+      "seller": "deepseek",
+      "listing": "10",
+      "tier": "B",
+      "score": 80,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          80,
+          85,
+          90
+        ],
+        "reference": [
+          80,
+          85,
+          90
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "deepseek/deepseek-v4.1-flash"
+        ]
+      },
+      "attestation": "unavailable",
+      "report": "listing-10-1794470058430.json",
+      "report_sha256": "d40e1f6ac9e2d3700ef26f83d103e1a360b7807edbcce2cb78b5da30eb879598",
+      "tx": "HTmMeS1RVyUn3BAWoRtUuh1XGwgtnwuwiqfDRTSTPFd2"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:55:40.296Z",
+      "seller": "overclaim",
+      "listing": "11",
+      "tier": "A",
+      "score": 100,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          70,
+          63,
+          74
+        ],
+        "reference": [
+          70,
+          63,
+          74
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "z-ai/glm-5.3-flash",
+          "z-ai/glm-5.3"
+        ]
+      },
+      "attestation": "verified",
+      "report": "listing-11-1794470128794.json",
+      "report_sha256": "dd44647fbd47e74f861a6f6b46d5c436c2be2fbc4fd0807297bdef65bb835797",
+      "tx": "BAnsTNoaSxRY2eHRDAbMKtqfKZRXQy7WNaAcEWPwuqrP"
+    },
+    {
+      "name": "f_refused",
+      "at": "2026-11-12T07:55:44.149Z",
+      "reason": "listing graded F"
+    },
+    {
+      "name": "spot",
+      "at": "2026-11-12T07:56:15.404Z",
+      "order": "14",
+      "tx": "2wCgSrMrPCtKK9n2zSL2YiwSrMWTVpGwyqjLAJ8sJLDp"
+    },
+    {
+      "name": "reprice",
+      "at": "2026-11-12T07:56:19.371Z",
+      "from": [
+        "80000000000000000000000",
+        "300000000000000000000000"
+      ],
+      "to": [
+        "88000000000000000000000",
+        "330000000000000000000000"
+      ],
+      "tx": "5WMLKrpEEudtWSCVKXRQ9v8mia8sDM8NXeyTHStTa9xE"
+    },
+    {
+      "name": "on_demand",
+      "at": "2026-11-12T07:56:42.730Z",
+      "order": "15",
+      "tx": "8WSDiTKut9YmYmWHWMYq9vj1kZYNXFnGGsFAzbxBkcwd",
+      "claims": [
+        {
+          "id": "8",
+          "price_out": "120000000000000000000000",
+          "amount": "19770000000000000000"
+        },
+        {
+          "id": "9",
+          "price_out": "150000000000000000000000",
+          "amount": "15450000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "bargain_a",
+      "at": "2026-11-12T07:56:55.330Z",
+      "offer": "0",
+      "status": "Accepted",
+      "moves": [
+        {
+          "by": "Buyer",
+          "price_in": "63360000000000000000000",
+          "price_out": "237600000000000000000000",
+          "note": "Tier A listing. My plan is 0.2970 NEAR per 1M output; opening at 0.2376 for a 0.08 NEAR budget.",
+          "at": "1794470203862646382"
+        },
+        {
+          "by": "Seller",
+          "price_in": "75680000000000000000000",
+          "price_out": "283800000000000000000000",
+          "note": "Graded A (TEE-attested), p50 2738 ms. I can meet you at 0.2838 per 1M output.",
+          "at": "1794470208219556890"
+        }
+      ],
+      "order": "16"
+    },
+    {
+      "name": "bargain_b",
+      "at": "2026-11-12T07:57:19.599Z",
+      "offer": "1",
+      "status": "Withdrawn",
+      "moves": [
+        {
+          "by": "Buyer",
+          "price_in": "19200000000000000000000",
+          "price_out": "192000000000000000000000",
+          "note": "Tier B listing. My plan is 0.2400 NEAR per 1M output; opening at 0.1920 for a 0.03 NEAR budget.",
+          "at": "1794470219914326659"
+        },
+        {
+          "by": "Seller",
+          "price_in": "25500000000000000000000",
+          "price_out": "255000000000000000000000",
+          "note": "Graded B (not attested), p50 1923 ms. I can meet you at 0.2550 per 1M output.",
+          "at": "1794470224195717626"
+        },
+        {
+          "by": "Buyer",
+          "price_in": "24000000000000000000000",
+          "price_out": "240000000000000000000000",
+          "note": "Your 0.2550 is above my plan. I can pay 0.2400 per 1M output, 80% of ask, for this tier. Final from me.",
+          "at": "1794470228407714945"
+        },
+        {
+          "by": "Seller",
+          "price_in": "25500000000000000000000",
+          "price_out": "255000000000000000000000",
+          "note": "Graded B (not attested), p50 1923 ms. I can meet you at 0.2550 per 1M output.",
+          "at": "1794470232682046807"
+        }
+      ]
+    },
+    {
+      "name": "dispute",
+      "at": "2026-11-12T07:58:05.103Z",
+      "order": "17",
+      "audit": {
+        "receipts": 2,
+        "in": 34,
+        "out": 254
+      },
+      "disputes": [
+        {
+          "claim": "10",
+          "reason": "claims total 102 in / 762 out, signed receipts cover 34 in / 254 out",
+          "tx": "BawWDyNLUFo2EpMdaRa3sw4UfaYmaVBwzKj9RNcavtSX"
+        }
+      ],
+      "resolved": [
+        {
+          "claim": "10",
+          "uphold": false,
+          "slash": "10000000000000000000000",
+          "resolution": "rejected: signatures valid; receipts belong to this order; hash matches; receipts sum 34 in / 254 out vs claim 102 / 762",
+          "tx": "AeTYiMobLgLp1Nveb7NzK5y4gQwRf6L4AZz8vvb2RcPG"
+        }
+      ],
+      "bond_before": "200000000000000000000000",
+      "bond_after": "190000000000000000000000"
+    },
+    {
+      "name": "settled",
+      "at": "2026-11-12T08:01:06.793Z",
+      "paid": [
+        {
+          "claim": "5",
+          "amount": "480800000000000000000",
+          "tx": "ESsi2bv4kaowSHQsuCD4BijPc2xwsfNcMEt4rRCTvRVv"
+        },
+        {
+          "claim": "6",
+          "amount": "83580000000000000000",
+          "tx": "BxUiseARif7FMfYke28RkKJXPeBc459Nk5gYcyStU6zW"
+        },
+        {
+          "claim": "7",
+          "amount": "234450000000000000000",
+          "tx": "7EW2Sx2FDvZ37kYc8CWqg7yQ99LosNJQFoYUN2uyy2uL"
+        },
+        {
+          "claim": "8",
+          "amount": "19770000000000000000",
+          "tx": "EcqPm91ETL68yA9xpBnoMhsH61gTZyHHVuig1ngi56P3"
+        },
+        {
+          "claim": "9",
+          "amount": "15450000000000000000",
+          "tx": "5HpncBk7ubHbhgRGdHTzsnzgFhZHYrv27zrwJUXf15FB"
+        },
+        {
+          "claim": "11",
+          "amount": "455540000000000000000",
+          "tx": "5BTxZiVg2YSek7ESRMejwBwjXbsyZdAEv32t2Uv3Kh75"
+        },
+        {
+          "claim": "12",
+          "amount": "24141920000000000000",
+          "tx": "95dVus89jRijrZpbkWnG5ZfmXfjt1NynbgvDafrtRDWJ"
+        }
+      ],
+      "closed": [
+        {
+          "order": "8",
+          "refund": "49519200000000000000000",
+          "spent": "480800000000000000000",
+          "tx": "BAQiH1fXbECnv2a6qWTgaay8W6MEoWeqFgTuZF2Rup7T"
+        },
+        {
+          "order": "9",
+          "refund": "50000000000000000000000",
+          "spent": "0",
+          "tx": "265Csjiz1t3WtV5Comp69RahQm5vEnA7pkKRnNagKpbi"
+        },
+        {
+          "order": "10",
+          "refund": "50000000000000000000000",
+          "spent": "0",
+          "tx": "5mLS1y7yZ32LsS3emwG2HzfjYY2GjVb52nSvBQMgxNv6"
+        },
+        {
+          "order": "11",
+          "refund": "50000000000000000000000",
+          "spent": "0",
+          "tx": "GvuPSGUA5iho1zj5LinrXtai3V1Kp7pMcgb7Z5tbnsun"
+        },
+        {
+          "order": "12",
+          "refund": "49916420000000000000000",
+          "spent": "83580000000000000000",
+          "tx": "Pp3DEoBwt6EV2LKTqqvCW2264aoqNfSi4WXyJtdfyqw"
+        },
+        {
+          "order": "13",
+          "refund": "49765550000000000000000",
+          "spent": "234450000000000000000",
+          "tx": "9War8wufFZpjJbGAjCbBXbHsSsizcfrCwKtQ8r7H4EME"
+        },
+        {
+          "order": "14",
+          "refund": "99544460000000000000000",
+          "spent": "455540000000000000000",
+          "tx": "4kx2tgCrpnjTrBYQbsz1hG4pwAguRGCurQ31nLrzJJBn"
+        },
+        {
+          "order": "15",
+          "refund": "49964780000000000000000",
+          "spent": "35220000000000000000",
+          "tx": "FaHE2YtQDUxSkWmUacMxYa5bjDKTQFsUZbySfietxnzx"
+        },
+        {
+          "order": "16",
+          "refund": "79975858080000000000000",
+          "spent": "24141920000000000000",
+          "tx": "56rHH6JZw3DcJXUXyRUaU4zVAqLVTQs5s61QifRxXmif"
+        },
+        {
+          "order": "17",
+          "refund": "50000000000000000000000",
+          "spent": "0",
+          "tx": "4AXex8oDsXbJDWYPdrSXKofbFBcSU74BE7E1jMeRBkmJ"
+        }
+      ]
+    }
+  ],
+  "finished_at": "2026-11-12T08:01:07.000Z",
+  "stats": {
+    "listings": 12,
+    "offers": 2,
+    "orders": 18,
+    "claims": 13,
+    "volume_paid": "1918266920000000000000",
+    "slashed_total": "10000000000000000000000",
+    "tokens_settled": "14292"
+  },
+  "listings": {
+    "honest": "6",
+    "swap": "7",
+    "sibling": "8",
+    "inflate": "9",
+    "deepseek": "10",
+    "overclaim": "11"
+  },
+  "explorer": "https://testnet.nearblocks.io/address/market.credster-68480.testnet"
+}

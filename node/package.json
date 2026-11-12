@@ -1,0 +1,26 @@
+{
+  "name": "credster-node",
+  "version": "1.0.0",
+  "description": "Credster seller node, buyer client, grading engine and agents",
+  "main": "src/cli.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "demo": "node ../scripts/demo.mjs",
+    "dashboard": "node src/dashboard.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "near-api-js": "^7.5.3"
+  },
+  "bin": {
+    "credster": "src/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

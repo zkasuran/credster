@@ -1,0 +1,265 @@
+{
+  "credster_report": 1,
+  "graded_at": "2026-11-12T07:32:27.183Z",
+  "grader": "grader.credster-68480.testnet",
+  "contract": "market.credster-68480.testnet",
+  "listing": {
+    "id": "4",
+    "seller": "s-deepseek.credster-68480.testnet",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "endpoint": "http://127.0.0.1:8715/v1",
+    "node_key": "ed25519:12MymPpyYDcEUjPWmHq4PsJzS4excztRH1yHw3z3Bd4N",
+    "ask_in": "30000000000000000000000",
+    "ask_out": "120000000000000000000000"
+  },
+  "trial_order": {
+    "id": "4",
+    "tx": "66KY68Z3X9p86e7q6sPbkTDVCkpjtmGiPh6Q1QuzBrEz"
+  },
+  "fingerprint": {
+    "observed": [
+      80,
+      85,
+      90
+    ],
+    "reference": [
+      80,
+      85,
+      90
+    ],
+    "verdict": "match",
+    "factor": 1,
+    "looks_like": [
+      "deepseek/deepseek-v4.1-flash"
+    ]
+  },
+  "probes_sha256": "fe3a60d5adb203aad2cce2f51eca3bd949e26556a5e44fec95173ef593012388",
+  "capability": {
+    "seed": 764702678,
+    "pct": 100,
+    "tasks": [
+      {
+        "id": "multiply",
+        "prompt": "Compute 768 * 369. Reply with only the number.",
+        "answer": "283392",
+        "correct": true
+      },
+      {
+        "id": "reverse",
+        "prompt": "Reverse the string \"coqtdfybyuj\" character by character. Reply with only the reversed string.",
+        "answer": "juybyfdtqoc",
+        "correct": true
+      },
+      {
+        "id": "sort",
+        "prompt": "Sort these numbers in ascending order: 64, 40, 27, 85, 74, 40, 62. Reply with only the numbers separated by commas.",
+        "answer": "27,40,40,62,64,74,85",
+        "correct": true
+      },
+      {
+        "id": "count",
+        "prompt": "How many times does the letter \"l\" appear in \"xlaltklwkejzagebqzrjykdj\"? Reply with only the number.",
+        "answer": "3",
+        "correct": true
+      }
+    ]
+  },
+  "attestation": {
+    "verdict": "unavailable",
+    "attested": false,
+    "tee_capable": false,
+    "steps": [
+      {
+        "check": "signature recovers to the stated signing address",
+        "fail": "signature does not recover to the stated signing address",
+        "ok": true,
+        "recovered": "0xb98a789cdc4817275f5155593ba73ef2a957e779"
+      },
+      {
+        "check": "signed text names the claimed model and our exact bytes",
+        "fail": "the signature does not name the claimed model and our bytes",
+        "ok": false,
+        "got": "2f68d21bbb89028899e37dfbdcf8363f77bba5df4ac067502e168d0b847578e2:6733bdd8fc34cf758adb8790ae5bf69d94e88d124603ff3c1a236340b5de1e18"
+      },
+      {
+        "check": "provider attestation report lists the signer for the claimed model",
+        "fail": "the claimed model's attestation report does not list this signer",
+        "ok": false,
+        "listed": []
+      }
+    ],
+    "signed_model": null,
+    "reason": "the signature does not name the claimed model and our bytes"
+  },
+  "calls": {
+    "total": 7,
+    "ok": 7,
+    "error_pct": 0,
+    "p50_latency_ms": 2019,
+    "receipts_ok": true,
+    "detail": [
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 2624,
+        "usage": {
+          "prompt_tokens": 80,
+          "completion_tokens": 16,
+          "total_tokens": 96,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 16,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 1356,
+        "usage": {
+          "prompt_tokens": 85,
+          "completion_tokens": 16,
+          "total_tokens": 101,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 16,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 1298,
+        "usage": {
+          "prompt_tokens": 90,
+          "completion_tokens": 16,
+          "total_tokens": 106,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 16,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 2019,
+        "usage": {
+          "prompt_tokens": 43,
+          "completion_tokens": 99,
+          "total_tokens": 142,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 96,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 2341,
+        "usage": {
+          "prompt_tokens": 52,
+          "completion_tokens": 228,
+          "total_tokens": 280,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 220,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1900,
+        "usage": {
+          "prompt_tokens": 67,
+          "completion_tokens": 71,
+          "total_tokens": 138,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 58,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 2023,
+        "usage": {
+          "prompt_tokens": 62,
+          "completion_tokens": 199,
+          "total_tokens": 261,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 198,
+            "audio_tokens": 0
+          }
+        },
+        "receiptOk": true
+      }
+    ]
+  },
+  "decision": {
+    "tier": "B",
+    "score": 80,
+    "fingerprintOk": true,
+    "meteringOk": true,
+    "attested": false,
+    "reasons": []
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+contract/target/
+.env
+.parent-account
+*.log
+/evidence/**/private/
+CHECKPOINT.md
+!evidence/**/run.log

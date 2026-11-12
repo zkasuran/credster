@@ -1,0 +1,127 @@
+# Credster end-to-end run 2026-11-12T07:50:17.638Z
+contract market.credster-68480.testnet
+
+## 1. Six sellers list an endpoint and post a 0.2 NEAR bond
+  listing 6 honest    claims Qwen/Qwen3.8-27B at 0.08/0.30 NEAR per 1M (node mode: honest) tx EhMi8GVBdF3CcV7FB2t5yNVhyamhvVYyxvg56jCm4yZV
+  listing 7 swap      claims Qwen/Qwen3.8-27B at 0.05/0.20 NEAR per 1M (node mode: swap -> Qwen/Qwen3.6-35B-A3B-FP8) tx 2oYrCKdDzY8M4nrPcFs9Spt5tAkuHT1k7jRHJHiSy1Ce
+  listing 8 sibling   claims Qwen/Qwen3.8-27B at 0.06/0.24 NEAR per 1M (node mode: swap -> Qwen/Qwen3.8-27B-abliterated) tx 68DUB8b51sRrP3UHivztLiozSMEmGtVVaUNzDZ5zmYVq
+  listing 9 inflate   claims z-ai/glm-5.3-flash at 0.03/0.12 NEAR per 1M (node mode: inflate) tx 4qcYpcTyzBxXZDTm2g3fkUMtYypn9c7naivvLjhJuMLB
+  listing 10 deepseek  claims deepseek/deepseek-v4.1-flash at 0.03/0.12 NEAR per 1M (node mode: honest) tx 8Xg8Wb5LtPDAmuKJNXH4LJHA3ZWDMm8SrjWk5fXGmzuK
+  listing 11 overclaim claims z-ai/glm-5.3-flash at 0.025/0.10 NEAR per 1M (node mode: overclaim) tx 7qEecfsGhUsVP2TvUJMJHtSxLvmx9Jsn3navPG2zr3C2
+
+## 2. An ungraded listing only takes small trial orders
+  refused as expected: listing not graded: only a trial order up to trial_cap
+
+## 3. The grader buys a trial order on each listing and probes it
+grading listing 6: Qwen/Qwen3.8-27B at http://127.0.0.1:8711/v1 (seller s-honest.credster-68480.testnet)
+  trial order 8 (0.050000 NEAR) tx 4b2ariSyJL28xDkQ56xFLavd9Cmjpk6rp2vzVh9ckre1
+  fingerprint observed [117,103,110] reference [117,103,110] -> match (matches Qwen/Qwen3.8-27B, Qwen/Qwen3.8-27B-abliterated)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation verified
+  tier A score 100; report sha256 7703bcd980719edee34e63b8617bc61706fca71eaba0ac598ef0046fc250d05a
+  posted grade tx ACdqxU4wJayoRoagrN3tdMquNzoQG6LnfBThDV2xdZRM
+grading listing 7: Qwen/Qwen3.8-27B at http://127.0.0.1:8712/v1 (seller s-swap.credster-68480.testnet)
+  trial order 9 (0.050000 NEAR) tx 76wUDLcxhQqPRLf6cCsfV6bX4JErufk4xvWE5SV1r15n
+  fingerprint observed [75,61,68] reference [117,103,110] -> mismatch (matches Qwen/Qwen3.6-35B-A3B-FP8)
+  capability multiply:ok reverse:x sort:ok count:ok = 75%
+  attestation contradicts: a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B
+  tier F score 15 (token counts do not match the claimed model; they match Qwen/Qwen3.6-35B-A3B-FP8; a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B); report sha256 8305897e157bcc21f77c0b8c5481feb3189bf56aa140d15b364cc902939e19a4
+  posted grade tx 85gdGXZkMS7VnxDiTgdooGu3oov9CHppsT1Zd52Hg9Dd
+grading listing 8: Qwen/Qwen3.8-27B at http://127.0.0.1:8713/v1 (seller s-sibling.credster-68480.testnet)
+  trial order 10 (0.050000 NEAR) tx 7hTRTBJXMzadtbhjA3DQtq9DBTVgNm5r7YeUa9CSSsDi
+  fingerprint observed [117,103,110] reference [117,103,110] -> match (matches Qwen/Qwen3.8-27B, Qwen/Qwen3.8-27B-abliterated)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation contradicts: a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B
+  tier F score 20 (a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B); report sha256 f3f6ffc78f95a340f38df4e9afa26282ff017944076641daa2df75d3bbcd7a76
+  posted grade tx 9ENZerfepdpkbKoaTvxax2cdKZGHkWjK8ejViXy6pYkd
+grading listing 9: z-ai/glm-5.3-flash at http://127.0.0.1:8714/v1 (seller s-inflate.credster-68480.testnet)
+  trial order 11 (0.050000 NEAR) tx Bqgzd5dJdCxDtGcYWRWZrkCt3pup5znZL6ZqgL6iqBKd
+  fingerprint observed [95,85,100] reference [70,63,74] -> scaled
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation unavailable: the signed response bytes differ from the bytes we received (the seller changed the answer)
+  tier F score 20 (usage is 1.353x the claimed model's token counts); report sha256 ba7605c13b54263a54ec3dfeaa5eae351d42ba10664f51ad0e9b115a201bec5e
+  posted grade tx GRGADUiMuE91YEmTY49Rr6ACR3tWmt1Fktz59atw4yEE
+grading listing 10: deepseek/deepseek-v4.1-flash at http://127.0.0.1:8715/v1 (seller s-deepseek.credster-68480.testnet)
+  trial order 12 (0.050000 NEAR) tx hoA11FixckP9QiQkzGkzXihKBHYUdLL4WDMQsoYiomT
+  fingerprint observed [80,85,90] reference [80,85,90] -> match (matches deepseek/deepseek-v4.1-flash)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation unavailable: the signature does not name the claimed model and our bytes
+  tier B score 80; report sha256 d40e1f6ac9e2d3700ef26f83d103e1a360b7807edbcce2cb78b5da30eb879598
+  posted grade tx HTmMeS1RVyUn3BAWoRtUuh1XGwgtnwuwiqfDRTSTPFd2
+grading listing 11: z-ai/glm-5.3-flash at http://127.0.0.1:8716/v1 (seller s-overclaim.credster-68480.testnet)
+  trial order 13 (0.050000 NEAR) tx 4ySZG8WnbUdUrkhT3kwk2P57dL8eFzNAqtDzxazoRnmn
+  fingerprint observed [70,63,74] reference [70,63,74] -> match (matches z-ai/glm-5.3-flash, z-ai/glm-5.3)
+  capability multiply:ok reverse:ok sort:ok count:ok = 100%
+  attestation verified
+  tier A score 100; report sha256 dd44647fbd47e74f861a6f6b46d5c436c2be2fbc4fd0807297bdef65bb835797
+  posted grade tx BAnsTNoaSxRY2eHRDAbMKtqfKZRXQy7WNaAcEWPwuqrP
+
+  grades: honest=A swap=F sibling=F inflate=F deepseek=B overclaim=A
+  the contract will not pay probe usage on the three F listings (checked in step 11)
+
+## 4. F-graded listings are suspended
+  refused as expected: listing graded F
+
+## 5. Spot: Alice buys 0.1 NEAR of Qwen/Qwen3.8-27B at the honest seller's ask
+  order 14 tx 2wCgSrMrPCtKK9n2zSL2YiwSrMWTVpGwyqjLAJ8sJLDp
+  answer (22511 ms, receipt verified: 64 in / 1282 out): A NEAR sub-account is a separate NEAR Protocol account whose ID is namespaced under another account, such as `contract.user.near`, allowing 
+  answer (3845 ms, receipt verified: 69 in / 201 out): - Grant limited permission to call specific smart-contract methods, such as transferring tokens. - Allow an app or third party to perform pr
+
+## 6. The seller's pricing rule raises the ask after demand; the spot order keeps its price
+  ask 0.0800/0.3000 -> 0.0880/0.3300 tx 5WMLKrpEEudtWSCVKXRQ9v8mia8sDM8NXeyTHStTa9xE
+
+## 7. On-demand: Bob opens a tab on deepseek with a ceiling of 0.15 per 1M output
+  tab order 15 tx 8WSDiTKut9YmYmWHWMYq9vj1kZYNXFnGGsFAzbxBkcwd
+  answer (3512 ms, receipt verified): Metered AI usage needs signed receipts so every charge can be independently verified and audited, preventing tampering or billing disputes b
+  deepseek seller raises its output ask to 0.30, above Bob's ceiling tx G5SyzRzFHQix9SgjZDccWZEtdeLJqNxnZ7AVLh3EPeT
+  answer (receipt verified): A price ceiling protects consumers by legally preventing prices from rising above a set maximum.
+  claim 8: 43 in / 154 out priced at 0.0300/0.1200 per 1M, amount 0.000019770 NEAR
+  claim 9: 40 in / 95 out priced at 0.0300/0.1500 per 1M, amount 0.000015450 NEAR
+
+## 8. Bargain: Bob's agent and the honest seller's agent negotiate (tier A)
+  buyer b-bob.credster-68480.testnet offers 0.0634/0.2376 on listing 6: "Tier A listing. My plan is 0.2970 NEAR per 1M output; opening at 0.2376 for a 0.08 NEAR budget." tx 3VpoG3EmsfygN7gGbWDUonWzRNKhBT2UC2DLDLCtvvYV
+  seller counters 0.0757/0.2838: "Graded A (TEE-attested), p50 2738 ms. I can meet you at 0.2838 per 1M output." tx 53LH4sxtZd9uAUznLmudqK1eP1YFwNSYZuVnesP7puFN
+  buyer accepts 0.0757/0.2838 -> order 16 tx B4dJDSjqTgh3PDdrT2qBy5EHb7yxH439DdbrUg4DcDY3
+  offer 0: Accepted after 2 moves, order 16
+  negotiated-order answer (receipt verified): Grading a seller before buying helps you gauge their reliability, product quality, and customer service to reduce the risk of a poor purchas
+
+## 9. Bargain: Alice's agent and the deepseek seller's agent (tier B) do not agree
+  buyer b-alice.credster-68480.testnet offers 0.0192/0.1920 on listing 10: "Tier B listing. My plan is 0.2400 NEAR per 1M output; opening at 0.1920 for a 0.03 NEAR budget." tx CCEnk6Hi3KB6kxuFkX931gqSY4z5fA9MMkuxjK4kyUvb
+  seller counters 0.0255/0.2550: "Graded B (not attested), p50 1923 ms. I can meet you at 0.2550 per 1M output." tx 5tCk8nDhpJaK1kKzkVbG8bd2jbasYpQTVP8jCL1kC5Le
+  buyer counters once at plan 0.0240/0.2400: "Your 0.2550 is above my plan. I can pay 0.2400 per 1M output, 80% of ask, for this tier. Final from me." tx D6LF1TX4vWD5K4ZNzR5eXNzW9wRsPU68uJ1QEU1zi5kJ
+  seller counters 0.0255/0.2550: "Graded B (not attested), p50 1923 ms. I can meet you at 0.2550 per 1M output." tx CoQCWFgdq34kQcTTaakUkJHBpsbMYFLTofvUWew75HD3
+  buyer walks away (counter above plan, no counters left) tx 2zTbcFw1WPtzfRnDxkCKFZMxKkYvxBQPhDGjhx4mFLzy
+  offer 1: Withdrawn after 4 moves, deposit refunded
+
+## 10. A seller that passed grading claims 3x the tokens it served
+  answer (receipt verified: 18 in / 223 out)
+  answer (receipt verified: 16 in / 31 out)
+  Alice's receipts: 2, 34 in / 254 out. Claims: #10 102/762
+  Alice disputes claim 10: claims total 102 in / 762 out, signed receipts cover 34 in / 254 out tx BawWDyNLUFo2EpMdaRa3sw4UfaYmaVBwzKj9RNcavtSX
+claim 10: rejected: signatures valid; receipts belong to this order; hash matches; receipts sum 34 in / 254 out vs claim 102 / 762 -> tx AeTYiMobLgLp1Nveb7NzK5y4gQwRf6L4AZz8vvb2RcPG
+  overclaim seller bond 0.200000 -> 0.190000 NEAR
+
+## 11. Sellers claim, the window passes, claims are paid, orders close with refunds
+  waiting 65 s for the challenge window
+  claim 5 paid 0.000480800 NEAR tx ESsi2bv4kaowSHQsuCD4BijPc2xwsfNcMEt4rRCTvRVv
+  claim 6 paid 0.000083580 NEAR tx BxUiseARif7FMfYke28RkKJXPeBc459Nk5gYcyStU6zW
+  claim 7 paid 0.000234450 NEAR tx 7EW2Sx2FDvZ37kYc8CWqg7yQ99LosNJQFoYUN2uyy2uL
+  claim 8 paid 0.000019770 NEAR tx EcqPm91ETL68yA9xpBnoMhsH61gTZyHHVuig1ngi56P3
+  claim 9 paid 0.000015450 NEAR tx 5HpncBk7ubHbhgRGdHTzsnzgFhZHYrv27zrwJUXf15FB
+  claim 11 paid 0.000455540 NEAR tx 5BTxZiVg2YSek7ESRMejwBwjXbsyZdAEv32t2Uv3Kh75
+  claim 12 paid 0.000024141 NEAR tx 95dVus89jRijrZpbkWnG5ZfmXfjt1NynbgvDafrtRDWJ
+  order 8 closed: spent 0.000480800, refunded 0.049519200 NEAR tx BAQiH1fXbECnv2a6qWTgaay8W6MEoWeqFgTuZF2Rup7T
+  order 9 closed: spent 0.000000000, refunded 0.050000000 NEAR tx 265Csjiz1t3WtV5Comp69RahQm5vEnA7pkKRnNagKpbi
+  order 10 closed: spent 0.000000000, refunded 0.050000000 NEAR tx 5mLS1y7yZ32LsS3emwG2HzfjYY2GjVb52nSvBQMgxNv6
+  order 11 closed: spent 0.000000000, refunded 0.050000000 NEAR tx GvuPSGUA5iho1zj5LinrXtai3V1Kp7pMcgb7Z5tbnsun
+  order 12 closed: spent 0.000083580, refunded 0.049916420 NEAR tx Pp3DEoBwt6EV2LKTqqvCW2264aoqNfSi4WXyJtdfyqw
+  order 13 closed: spent 0.000234450, refunded 0.049765550 NEAR tx 9War8wufFZpjJbGAjCbBXbHsSsizcfrCwKtQ8r7H4EME
+  order 14 closed: spent 0.000455540, refunded 0.099544460 NEAR tx 4kx2tgCrpnjTrBYQbsz1hG4pwAguRGCurQ31nLrzJJBn
+  order 15 closed: spent 0.000035220, refunded 0.049964780 NEAR tx FaHE2YtQDUxSkWmUacMxYa5bjDKTQFsUZbySfietxnzx
+  order 16 closed: spent 0.000024141, refunded 0.079975858 NEAR tx 56rHH6JZw3DcJXUXyRUaU4zVAqLVTQs5s61QifRxXmif
+  order 17 closed: spent 0.000000000, refunded 0.050000000 NEAR tx 4AXex8oDsXbJDWYPdrSXKofbFBcSU74BE7E1jMeRBkmJ
+
+## Result
+  listings 12, orders 18, claims 13, paid 0.001918266 NEAR, slashed 0.010000 NEAR, tokens settled 14292
+
+evidence: evidence/run-2026-11-12T07-50-17

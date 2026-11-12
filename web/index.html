@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credster: graded AI credit market on NEAR</title>
+<meta name="description" content="Buy and sell AI inference credits on NEAR. Every seller endpoint is graded: does it serve the model it claims, and does it bill honestly.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>Credster</h1>
+      <p class="tag">A market for AI inference credits where every seller is graded before it can trade.</p>
+    </div>
+  </div>
+  <div class="net">
+    <label for="contract">Contract</label>
+    <input id="contract" spellcheck="false">
+    <button id="reload" type="button">Load</button>
+  </div>
+</header>
+
+<main>
+  <section class="stats" id="stats" aria-live="polite"></section>
+
+  <section>
+    <div class="section-head">
+      <h2>Listings</h2>
+      <label class="toggle"><input type="checkbox" id="showClosed"> show closed</label>
+    </div>
+    <p class="hint">A grade comes from probing the seller's endpoint as an ordinary buyer: token-count fingerprints against the claimed model, a TEE signature check where the model has one, fresh checkable tasks, latency and errors. F suspends the listing.</p>
+    <div id="listings" class="cards"></div>
+  </section>
+
+  <section>
+    <h2>Bargaining</h2>
+    <p class="hint">Offers, counters and the reasoning each agent put on chain. At most four moves, then accept or walk away.</p>
+    <div id="offers"></div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>Orders</h2>
+      <div class="table-wrap"><table id="orders"></table></div>
+    </div>
+    <div>
+      <h2>Usage claims</h2>
+      <div class="table-wrap"><table id="claims"></table></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="report">
+  <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+  <div id="reportBody"></div>
+</dialog>
+
+<footer>
+  <span>Built at NEAR HACKATHON 2026. Reads the contract straight from NEAR RPC; no backend.</span>
+  <a href="https://github.com/zkasuran/credster">Source</a>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

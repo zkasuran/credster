@@ -1,0 +1,283 @@
+{
+  "started_at": "2026-11-12T07:29:13.350Z",
+  "contract": "market.credster-68480.testnet",
+  "steps": [
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:17.513Z",
+      "seller": "honest",
+      "listing": "0",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "honest",
+      "served": "Qwen/Qwen3.8-27B",
+      "tx": "5hZ5bdVed3JSxU1gP8PkrVFp23bfad7oJuBkFfmCTsNS"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:21.765Z",
+      "seller": "swap",
+      "listing": "1",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "swap",
+      "served": "Qwen/Qwen3.6-35B-A3B-FP8",
+      "tx": "7Vhk8CHkARCU4jWL1ApoiaFPVPrbrFTQ4rPoc6TFfXv"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:25.828Z",
+      "seller": "sibling",
+      "listing": "2",
+      "model": "Qwen/Qwen3.8-27B",
+      "mode": "swap",
+      "served": "Qwen/Qwen3.8-27B-abliterated",
+      "tx": "9uNJ7iqPm4nKnRogBMSJwKFwwpN3xZrfJxsrd7zhvsH8"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:30.046Z",
+      "seller": "inflate",
+      "listing": "3",
+      "model": "z-ai/glm-5.3-flash",
+      "mode": "inflate",
+      "served": "z-ai/glm-5.3-flash",
+      "tx": "6HTLUeahKe7HybTkXE69QUX3FfBojdJJQVtpKVnHaAnv"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:34.312Z",
+      "seller": "deepseek",
+      "listing": "4",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "mode": "honest",
+      "served": "deepseek/deepseek-v4.1-flash",
+      "tx": "2ZtB7D2snSyTjkGMPjUppK1ShEyCPbz59YNw9nAGjSzG"
+    },
+    {
+      "name": "listed",
+      "at": "2026-11-12T07:29:38.194Z",
+      "seller": "overclaim",
+      "listing": "5",
+      "model": "z-ai/glm-5.3-flash",
+      "mode": "overclaim",
+      "served": "z-ai/glm-5.3-flash",
+      "tx": "5AywUn35xNTAfoJLubJcJ2CQesiB1i6b8YnmcopcBYV2"
+    },
+    {
+      "name": "ungraded_refused",
+      "at": "2026-11-12T07:29:42.466Z",
+      "reason": "listing not graded: only a trial order up to trial_cap"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:30:23.076Z",
+      "seller": "honest",
+      "listing": "0",
+      "tier": "A",
+      "score": 100,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          117,
+          103,
+          110
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "Qwen/Qwen3.8-27B",
+          "Qwen/Qwen3.8-27B-abliterated"
+        ]
+      },
+      "attestation": "verified",
+      "report": "listing-0-1794468610305.json",
+      "report_sha256": "fb5fef8c6c02aa61428b7131e48149930cd8eb4d76900c25fbfc7f599613293e",
+      "tx": "8pLdZ7NU2GRTzubyxjLgGa89zjcoD3CTgemFReYSgVyc"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:30:53.125Z",
+      "seller": "swap",
+      "listing": "1",
+      "tier": "F",
+      "score": 15,
+      "reasons": [
+        "token counts do not match the claimed model; they match Qwen/Qwen3.6-35B-A3B-FP8",
+        "a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B"
+      ],
+      "fingerprint": {
+        "observed": [
+          75,
+          61,
+          68
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "mismatch",
+        "factor": 0.617,
+        "looks_like": [
+          "Qwen/Qwen3.6-35B-A3B-FP8"
+        ]
+      },
+      "attestation": "contradicts",
+      "report": "listing-1-1794468642605.json",
+      "report_sha256": "79caf66c2ae9fb7570f461342d7b660eac6f8961b5ead30a4667628659c3d181",
+      "tx": "DzmScnrTFF1xExkAtu2Zbj4amMjvESmnRp2bsMFSAs7k"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:31:31.322Z",
+      "seller": "sibling",
+      "listing": "2",
+      "tier": "F",
+      "score": 20,
+      "reasons": [
+        "a TEE signature shows Qwen/Qwen3.8-27B-abliterated answered, not Qwen/Qwen3.8-27B"
+      ],
+      "fingerprint": {
+        "observed": [
+          117,
+          103,
+          110
+        ],
+        "reference": [
+          117,
+          103,
+          110
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "Qwen/Qwen3.8-27B",
+          "Qwen/Qwen3.8-27B-abliterated"
+        ]
+      },
+      "attestation": "contradicts",
+      "report": "listing-2-1794468680358.json",
+      "report_sha256": "68c373feaf93965cc92c75a768806218e58b5140ef66fd923519f93871132571",
+      "tx": "GMVDqSqwCuQAp7VaPmwdEQcGLHLN1iqkNs2BiWDuVAX9"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:32:05.536Z",
+      "seller": "inflate",
+      "listing": "3",
+      "tier": "F",
+      "score": 20,
+      "reasons": [
+        "usage is 1.353x the claimed model's token counts"
+      ],
+      "fingerprint": {
+        "observed": [
+          95,
+          85,
+          100
+        ],
+        "reference": [
+          70,
+          63,
+          74
+        ],
+        "verdict": "scaled",
+        "factor": 1.353,
+        "looks_like": []
+      },
+      "attestation": "unavailable",
+      "report": "listing-3-1794468714004.json",
+      "report_sha256": "2389466ae50667246f9b520dbb006dee338ba14de2967cb0b13cb66681b4437f",
+      "tx": "8yWr59HDU5QK9A8tZJoqPZ6pXXeXMGaGbM59tKA16Ghh"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:32:38.837Z",
+      "seller": "deepseek",
+      "listing": "4",
+      "tier": "B",
+      "score": 80,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          80,
+          85,
+          90
+        ],
+        "reference": [
+          80,
+          85,
+          90
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "deepseek/deepseek-v4.1-flash"
+        ]
+      },
+      "attestation": "unavailable",
+      "report": "listing-4-1794468747183.json",
+      "report_sha256": "f9b5f10d8a47543d3f82d3b7c6f39e114a775fc2cf6ac1dcb9807bdcfac86584",
+      "tx": "2ayJu6bwxcTFAP3aw8mFYtfsjnVntwQfVkvNYZrFbs5H"
+    },
+    {
+      "name": "graded",
+      "at": "2026-11-12T07:33:16.697Z",
+      "seller": "overclaim",
+      "listing": "5",
+      "tier": "A",
+      "score": 100,
+      "reasons": [],
+      "fingerprint": {
+        "observed": [
+          70,
+          63,
+          74
+        ],
+        "reference": [
+          70,
+          63,
+          74
+        ],
+        "verdict": "match",
+        "factor": 1,
+        "looks_like": [
+          "z-ai/glm-5.3-flash",
+          "z-ai/glm-5.3"
+        ]
+      },
+      "attestation": "verified",
+      "report": "listing-5-1794468785034.json",
+      "report_sha256": "e1cd3a9364280eaac93fedd5187a123874b8b1b6b8c69ca4f4eecc2e45184cf4",
+      "tx": "HUWMs3JmQruR7ChksDXfYHF9FjcdUJ9Nkp7TZtJYyLJw"
+    },
+    {
+      "name": "f_refused",
+      "at": "2026-11-12T07:33:20.447Z",
+      "reason": "listing graded F"
+    },
+    {
+      "name": "spot",
+      "at": "2026-11-12T07:34:03.292Z",
+      "order": "6",
+      "tx": "E68asMiZk99JkWCoo8s7tzS4htMjgoDSfRYdjWKm9Zhu"
+    },
+    {
+      "name": "reprice",
+      "at": "2026-11-12T07:34:07.884Z",
+      "from": [
+        "80000000000000000000000",
+        "300000000000000000000000"
+      ],
+      "to": [
+        "88000000000000000000000",
+        "330000000000000000000000"
+      ],
+      "tx": "7FrRddJgMWN4HigFivvhwZrzjvdSRJd1La19sLBg5dZr"
+    }
+  ]
+}

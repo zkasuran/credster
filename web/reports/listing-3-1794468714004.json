@@ -1,0 +1,234 @@
+{
+  "credster_report": 1,
+  "graded_at": "2026-11-12T07:31:54.004Z",
+  "grader": "grader.credster-68480.testnet",
+  "contract": "market.credster-68480.testnet",
+  "listing": {
+    "id": "3",
+    "seller": "s-inflate.credster-68480.testnet",
+    "model": "z-ai/glm-5.3-flash",
+    "endpoint": "http://127.0.0.1:8714/v1",
+    "node_key": "ed25519:2p52kv5WgPUBBqsi9sQKJt24Jq4S79nwrugXnBLJ6E5c",
+    "ask_in": "30000000000000000000000",
+    "ask_out": "120000000000000000000000"
+  },
+  "trial_order": {
+    "id": "3",
+    "tx": "6fPEyVFdgkPtsj7sKpbJXAvTNPFWjfpJSrVWGeWD1ESw"
+  },
+  "fingerprint": {
+    "observed": [
+      95,
+      85,
+      100
+    ],
+    "reference": [
+      70,
+      63,
+      74
+    ],
+    "verdict": "scaled",
+    "factor": 1.353,
+    "looks_like": []
+  },
+  "probes_sha256": "fe3a60d5adb203aad2cce2f51eca3bd949e26556a5e44fec95173ef593012388",
+  "capability": {
+    "seed": 1757060804,
+    "pct": 100,
+    "tasks": [
+      {
+        "id": "multiply",
+        "prompt": "Compute 535 * 431. Reply with only the number.",
+        "answer": "230585",
+        "correct": true
+      },
+      {
+        "id": "reverse",
+        "prompt": "Reverse the string \"eiuttnqphvu\" character by character. Reply with only the reversed string.",
+        "answer": "uvhpqnttuie",
+        "correct": true
+      },
+      {
+        "id": "sort",
+        "prompt": "Sort these numbers in ascending order: 36, 18, 80, 48, 24, 58, 95. Reply with only the numbers separated by commas.",
+        "answer": "18, 24, 36, 48, 58, 80, 95",
+        "correct": true
+      },
+      {
+        "id": "count",
+        "prompt": "How many times does the letter \"b\" appear in \"onpdwnvliyzypviwvibdsvha\"? Reply with only the number.",
+        "answer": "1",
+        "correct": true
+      }
+    ]
+  },
+  "attestation": {
+    "verdict": "unavailable",
+    "attested": false,
+    "tee_capable": true,
+    "steps": [
+      {
+        "check": "signature recovers to the stated signing address",
+        "fail": "signature does not recover to the stated signing address",
+        "ok": true,
+        "recovered": "0x3b753b4406613c5e70ae640508632b600424fa0c"
+      },
+      {
+        "check": "signed text names the claimed model and our exact bytes",
+        "fail": "the signed response bytes differ from the bytes we received (the seller changed the answer)",
+        "ok": false,
+        "got": "z-ai/glm-5.3-flash:01c5ad6bcab84f79e11d17d13facb906fa9c58a067a7e95f566418872d0cf327:59aa6855717d842d81968ccd6e2d244c80fe6bbd846cd07b4dd24c3c46b24a0d"
+      },
+      {
+        "check": "provider attestation report lists the signer for the claimed model",
+        "fail": "the claimed model's attestation report does not list this signer",
+        "ok": true,
+        "listed": [
+          "0x3b753b4406613c5e70ae640508632b600424fa0c"
+        ]
+      }
+    ],
+    "signed_model": "z-ai/glm-5.3-flash",
+    "reason": "the signed response bytes differ from the bytes we received (the seller changed the answer)"
+  },
+  "calls": {
+    "total": 7,
+    "ok": 7,
+    "error_pct": 0,
+    "p50_latency_ms": 2031,
+    "receipts_ok": true,
+    "detail": [
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 2031,
+        "usage": {
+          "prompt_tokens": 95,
+          "total_tokens": 117,
+          "completion_tokens": 22,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 1832,
+        "usage": {
+          "prompt_tokens": 85,
+          "total_tokens": 107,
+          "completion_tokens": 22,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 2035,
+        "usage": {
+          "prompt_tokens": 100,
+          "total_tokens": 122,
+          "completion_tokens": 22,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 3012,
+        "usage": {
+          "prompt_tokens": 36,
+          "total_tokens": 334,
+          "completion_tokens": 298,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 217,
+          "completion_tokens_details": {
+            "reasoning_tokens": 217
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1924,
+        "usage": {
+          "prompt_tokens": 46,
+          "total_tokens": 303,
+          "completion_tokens": 257,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 183,
+          "completion_tokens_details": {
+            "reasoning_tokens": 183
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1304,
+        "usage": {
+          "prompt_tokens": 66,
+          "total_tokens": 192,
+          "completion_tokens": 126,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 73,
+          "completion_tokens_details": {
+            "reasoning_tokens": 73
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 2609,
+        "usage": {
+          "prompt_tokens": 61,
+          "total_tokens": 255,
+          "completion_tokens": 194,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 142,
+          "completion_tokens_details": {
+            "reasoning_tokens": 142
+          }
+        },
+        "receiptOk": true
+      }
+    ]
+  },
+  "decision": {
+    "tier": "F",
+    "score": 20,
+    "fingerprintOk": true,
+    "meteringOk": false,
+    "attested": false,
+    "reasons": [
+      "usage is 1.353x the claimed model's token counts"
+    ]
+  }
+}

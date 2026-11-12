@@ -1,0 +1,225 @@
+{
+  "models": {
+    "Qwen/Qwen3.8-27B": {
+      "counts": [
+        117,
+        103,
+        110
+      ],
+      "stable": true,
+      "runs": [
+        [
+          117,
+          103,
+          110
+        ],
+        [
+          117,
+          103,
+          110
+        ]
+      ],
+      "measured_at": "2026-11-12T06:40:14.776Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "Qwen/Qwen3.6-35B-A3B-FP8": {
+      "counts": [
+        75,
+        61,
+        68
+      ],
+      "stable": true,
+      "runs": [
+        [
+          75,
+          61,
+          68
+        ],
+        [
+          75,
+          61,
+          68
+        ]
+      ],
+      "measured_at": "2026-11-12T06:40:17.805Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "z-ai/glm-5.3-flash": {
+      "counts": [
+        70,
+        63,
+        74
+      ],
+      "stable": true,
+      "runs": [
+        [
+          70,
+          63,
+          74
+        ],
+        [
+          70,
+          63,
+          74
+        ]
+      ],
+      "measured_at": "2026-11-12T06:40:29.202Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "z-ai/glm-5.3": {
+      "counts": [
+        70,
+        63,
+        74
+      ],
+      "stable": true,
+      "runs": [
+        [
+          70,
+          63,
+          74
+        ],
+        [
+          70,
+          63,
+          74
+        ]
+      ],
+      "measured_at": "2026-11-12T06:40:32.820Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "deepseek/deepseek-v4.1-flash": {
+      "counts": [
+        80,
+        85,
+        90
+      ],
+      "stable": true,
+      "runs": [
+        [
+          80,
+          85,
+          90
+        ],
+        [
+          80,
+          85,
+          90
+        ]
+      ],
+      "measured_at": "2026-11-12T06:40:41.234Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "deepseek/deepseek-v3.2": {
+      "counts": [
+        54,
+        59,
+        64
+      ],
+      "stable": true,
+      "runs": [
+        [
+          54,
+          59,
+          64
+        ],
+        [
+          54,
+          59,
+          64
+        ]
+      ],
+      "measured_at": "2026-11-12T06:41:33.308Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "google/gemini-2.5-flash-lite": {
+      "counts": [
+        60,
+        54,
+        53
+      ],
+      "stable": true,
+      "runs": [
+        [
+          60,
+          54,
+          53
+        ],
+        [
+          60,
+          54,
+          53
+        ]
+      ],
+      "measured_at": "2026-11-12T06:41:37.927Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "anthropic/claude-haiku-5-5": {
+      "counts": [
+        85,
+        81,
+        90
+      ],
+      "stable": true,
+      "runs": [
+        [
+          85,
+          81,
+          90
+        ],
+        [
+          85,
+          81,
+          90
+        ]
+      ],
+      "measured_at": "2026-11-12T06:41:45.175Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "moonshotai/kimi-k2.6": {
+      "counts": [
+        59,
+        59,
+        72
+      ],
+      "stable": true,
+      "runs": [
+        [
+          59,
+          59,
+          72
+        ],
+        [
+          59,
+          59,
+          72
+        ]
+      ],
+      "measured_at": "2026-11-12T06:43:00.131Z",
+      "source": "https://cloud-api.near.ai"
+    },
+    "Qwen/Qwen3.8-27B-abliterated": {
+      "counts": [
+        117,
+        103,
+        110
+      ],
+      "stable": true,
+      "runs": [
+        [
+          117,
+          103,
+          110
+        ],
+        [
+          117,
+          103,
+          110
+        ]
+      ],
+      "measured_at": "2026-11-12T06:43:07.133Z",
+      "source": "https://cloud-api.near.ai"
+    }
+  },
+  "probes_sha256": "fe3a60d5adb203aad2cce2f51eca3bd949e26556a5e44fec95173ef593012388"
+}
