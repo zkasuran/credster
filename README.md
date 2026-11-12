@@ -181,6 +181,6 @@ sequenceDiagram
 
 - **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, Playwright (screenshots only). The landing page vendors GSAP 3.15 with ScrollTrigger and SplitText (GSAP standard no-charge license), Lenis 1.3 (MIT), @noble/ed25519 3.2 (MIT, for in-browser signing) and the fonts Instrument Serif, Inter Tight and JetBrains Mono (SIL OFL) in `web/site/`.
 - **AI assistance:** the code and docs were written with an AI coding agent, directed and reviewed by the author.
-- **Generated media:** the landing page's photographs were made with Gemini 3 Pro Image and GPT Image 2.5, and its video loops with Kling 3.0 image-to-video, all through GMI Cloud. They are illustrations; every number on the page comes from the testnet run or from live RPC.
+- **Generated media:** the landing page's photographs were made with Gemini 3 Pro Image and GPT Image 2.5 and its video loops with Kling 3.0 image-to-video, all through GMI Cloud. They are illustrations; every number on the page comes from the testnet run or from live RPC.
 
 License: MIT.
