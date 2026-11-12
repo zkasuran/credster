@@ -1,0 +1,7 @@
+**/node_modules
+contract/target
+evidence
+assets
+.git
+.env
+*.log

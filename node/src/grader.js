@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomInt } from "node:crypto";
-import { view, call, near, fmtNear } from "./near.js";
+import { view, viewAll, call, near, fmtNear } from "./near.js";
 import { sha256hex, recoverEip191, verifyReceipt, receiptsHash } from "./sign.js";
 import { FINGERPRINT_PROBES, fingerprintRequest, capabilityTasks, capabilityRequest } from "./probes.js";
 import { Buyer } from "./buyer.js";
@@ -14,6 +14,9 @@ import { Buyer } from "./buyer.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const FINGERPRINTS = join(HERE, "..", "fingerprints.json");
 export const REPORTS = process.env.TS_REPORTS || join(HERE, "..", "..", "web", "reports");
+// Where browsers fetch reports from. Unset: "reports/<file>", relative to the
+// dashboard (the repo's web/reports). The live server sets an absolute URL.
+const REPORT_BASE = (process.env.TS_REPORT_BASE_URL || "reports").replace(/\/$/, "");
 const PROVIDER = process.env.TS_PROVIDER || "https://cloud-api.near.ai";
 
 const loadRefs = () => (existsSync(FINGERPRINTS) ? JSON.parse(readFileSync(FINGERPRINTS, "utf8")) : { models: {} });
@@ -257,7 +260,7 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
       p50_latency_ms: latency,
       error_pct: errorPct,
       report_hash: hash,
-      report_url: `reports/${fileName}`,
+      report_url: `${REPORT_BASE}/${fileName}`,
     });
     tx = r.txHash;
     log(`  posted grade tx ${tx}`);
@@ -272,8 +275,8 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
  * hash is the claim's receipts_hash and whose token sums equal the claim.
  * No proof, or a proof that does not add up, rejects the claim and slashes.
  */
-export async function resolveDisputes({ grader, slashFactor = 2n, minSlash = 10n ** 22n, log = console.log } = {}) {
-  const claims = (await view("get_claims", { from: 0, limit: 100 })).filter((c) => c.status === "Disputed");
+export async function resolveDisputes({ grader, slashFactor = 2n, minSlash = 10n ** 22n, log = console.log, claims: known } = {}) {
+  const claims = (known || (await viewAll("get_claims"))).filter((c) => c.status === "Disputed");
   const out = [];
   for (const c of claims) {
     const order = await view("get_order", { order_id: c.order_id });

@@ -59,7 +59,7 @@
     </nav>
     <div class="nav-cta">
       <a class="icon-link" href="https://github.com/zkasuran/credster" aria-label="Source on GitHub"><svg><use href="#i-gh"/></svg></a>
-      <a class="btn btn-sm btn-gold" href="market.html">Live market<svg><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-sm btn-gold" href="live.html">Try it live<svg><use href="#i-arrow"/></svg></a>
     </div>
   </div>
   <div class="nav-progress" aria-hidden="true"><span></span></div>
@@ -82,8 +82,8 @@
     </h1>
     <p class="lede hero-in" style="--d:.6s">Credster is a market for spare AI inference credits. Every seller is graded before it can trade: is it the model it claims, and is the token count honest? The grade lives on chain. An&nbsp;F suspends the listing.</p>
     <div class="cta-row hero-in" style="--d:.75s">
-      <a class="btn btn-gold" href="#run">See the testnet run<svg><use href="#i-arrow"/></svg></a>
-      <a class="btn btn-ghost" href="market.html">Open the live market<svg><use href="#i-out"/></svg></a>
+      <a class="btn btn-gold" href="live.html">Try it live on testnet<svg><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-ghost" href="#run">See the recorded run<svg><use href="#i-arrow"/></svg></a>
     </div>
   </div>
   <aside class="definition hero-in" style="--d:1s" aria-label="Definition">
@@ -405,6 +405,11 @@
   </div>
 
   <div class="wrap">
+    <div class="live-band" data-fade>
+      <p class="live-band-k">Your turn</p>
+      <p class="live-band-t">The same six personas run on a live server. Buy from them with free test NEAR, catch the overclaim with your own receipts, or launch a cheating seller and watch the grader fail it. All in the browser, no install.</p>
+      <a class="btn btn-gold" href="live.html">Try it live<svg><use href="#i-arrow"/></svg></a>
+    </div>
     <div class="run-notes">
       <p data-fade>The three F listings were suspended. Buying from them was refused with <code>listing graded F</code>, and the contract paid nothing for the grader’s probe calls on them: orders 9, 10 and 11 closed with 0 spent.</p>
       <p class="caveat" data-fade>One run, six sellers, all personas run by the author against one NEAR AI Cloud account on <code>127.0.0.1</code> endpoints. It shows the mechanism working end to end. It is not a benchmark of grading accuracy.</p>
@@ -651,7 +656,7 @@ cd node &amp;&amp; TS_CONTRACT=market.credster-68480.testnet \
   <div class="wrap finale-inner">
     <h2 class="display-2" data-split>Sell what you don’t use.<br><em class="gold-text">Buy what you can check.</em></h2>
     <div class="cta-row" data-fade>
-      <a class="btn btn-gold" href="market.html">Open the live market<svg><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-gold" href="live.html">Try it live<svg><use href="#i-arrow"/></svg></a>
       <a class="btn btn-ghost" href="https://github.com/zkasuran/credster"><svg class="pre"><use href="#i-gh"/></svg>Read the code</a>
     </div>
   </div>
@@ -663,7 +668,8 @@ cd node &amp;&amp; TS_CONTRACT=market.credster-68480.testnet \
     <div class="foot-brand"><svg class="mark"><use href="#i-mark"/></svg><div><b>Credster</b><span>Built at NEAR HACKATHON, 1–14 Nov 2026. MIT licence.</span></div></div>
     <p class="foot-disc">Code and docs were written with an AI coding agent, directed and reviewed by the author. The photographs and video loops on this page are AI-generated with Gemini 3 Pro Image, GPT Image 2.5 and Kling 3.0 via GMI Cloud. The hero figures and the hash checks are read live from NEAR testnet; everything else comes from the 12 Nov 2026 run.</p>
     <nav class="foot-links" aria-label="Footer">
-      <a href="market.html">Live market</a>
+      <a href="live.html">Try it live</a>
+      <a href="market.html">Dashboard</a>
       <a href="https://github.com/zkasuran/credster">GitHub</a>
       <a href="https://github.com/zkasuran/credster/blob/master/docs/RULES.md">Market rules</a>
       <a href="https://testnet.nearblocks.io/address/market.credster-68480.testnet">Contract</a>

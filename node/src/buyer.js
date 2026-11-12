@@ -1,6 +1,6 @@
 // Buyer client: opens orders (spot, tab, bargain), calls a seller node with
 // signed requests, keeps the node's signed receipts, and audits claims.
-import { view, call, newKeyPair, keyPairFrom } from "./near.js";
+import { view, viewAll, call, newKeyPair, keyPairFrom } from "./near.js";
 import { signRequest, verifyReceipt } from "./sign.js";
 import { path, appendLine, readLines, readJson, writeJson } from "./store.js";
 
@@ -34,6 +34,36 @@ export class Buyer {
     const s = this._keys()[String(orderId)];
     if (!s) throw new Error(`no key for order ${orderId}`);
     return keyPairFrom(s);
+  }
+
+  /**
+   * Finds the key for an order, including one opened when the seller accepted
+   * this buyer's offer (the order then carries the offer's key).
+   */
+  async orderKeyFor(orderId) {
+    if (this._keys()[String(orderId)]) return this.orderKey(orderId);
+    for (const o of await viewAll("get_offers")) {
+      if (o.buyer === this.accountId && String(o.order_id) === String(orderId)) this.bindOffer(o.id, orderId);
+    }
+    return this.orderKey(orderId);
+  }
+
+  async counter(offerId, priceIn, priceOut, note) {
+    return call(this.accountId, "counter_offer", { offer_id: String(offerId), price_in: String(priceIn), price_out: String(priceOut), note: String(note).slice(0, 280) });
+  }
+
+  async accept(offerId) {
+    const r = await call(this.accountId, "accept_offer", { offer_id: String(offerId) });
+    this.bindOffer(offerId, r.value);
+    return r;
+  }
+
+  endOffer(offerId) {
+    return call(this.accountId, "end_offer", { offer_id: String(offerId) });
+  }
+
+  settle(orderId) {
+    return call(this.accountId, "settle_close", { order_id: String(orderId) });
   }
 
   async buySpot(listingId, depositYocto) {
@@ -82,7 +112,7 @@ export class Buyer {
     endpoint = endpoint || listing.endpoint;
     nodeKey = nodeKey || listing.node_key;
     const bytes = Buffer.from(typeof body === "string" ? body : JSON.stringify(body));
-    const headers = { "content-type": "application/json", ...signRequest(this.orderKey(orderId), orderId, bytes) };
+    const headers = { "content-type": "application/json", ...signRequest(await this.orderKeyFor(orderId), orderId, bytes) };
     const t0 = Date.now();
     const res = await fetch(`${endpoint.replace(/\/$/, "")}/chat/completions`, { method: "POST", headers, body: bytes, signal: AbortSignal.timeout(180_000) });
     const raw = Buffer.from(await res.arrayBuffer());
@@ -108,7 +138,7 @@ export class Buyer {
     const mine = this.receipts(orderId);
     const haveIn = mine.reduce((s, r) => s + r.in, 0);
     const haveOut = mine.reduce((s, r) => s + r.out, 0);
-    const all = await view("get_claims", { from: 0, limit: 100 });
+    const all = await viewAll("get_claims");
     const claims = all.filter((c) => String(c.order_id) === String(orderId) && c.status !== "Rejected").sort((a, b) => Number(a.id) - Number(b.id));
     let accIn = 0, accOut = 0;
     const bad = [];

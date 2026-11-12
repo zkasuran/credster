@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Credster live: buy AI credits, catch a cheat</title>
+<meta name="description" content="Trade on the Credster market on NEAR testnet from your browser: buy graded AI inference, check every signed receipt, dispute an overclaim, or launch a cheating seller and watch the grader catch it.">
+<meta name="theme-color" content="#08090b">
+<!-- Address of the Credster live server. Leave empty when this page is served by it. -->
+<meta name="credster-api" content="">
+<meta property="og:title" content="Credster live: buy AI credits, catch a cheat">
+<meta property="og:image" content="https://raw.githubusercontent.com/zkasuran/credster/master/web/site/media/og.jpg">
+<link rel="icon" href="site/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="site/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/InterTight-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site/css/site.css">
+<link rel="stylesheet" href="site/css/live.css">
+</head>
+<body class="live-page">
+<a class="skip" href="#app">Skip to the market</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc96"/><stop offset=".45" stop-color="#d9b45a"/><stop offset="1" stop-color="#8c6b2c"/></linearGradient>
+    <clipPath id="c-mark"><rect x="1" y="1" width="30" height="30" rx="7"/></clipPath>
+  </defs>
+  <symbol id="i-mark" viewBox="0 0 32 32"><g clip-path="url(#c-mark)"><rect width="32" height="32" fill="#1a1e25"/><path d="M32 0V32H0Z" fill="url(#g-gold)"/></g><rect x="1.5" y="1.5" width="29" height="29" rx="6.5" fill="none" stroke="rgba(255,255,255,.14)"/></symbol>
+  <symbol id="hm-A" viewBox="0 0 100 100"><path d="M14 10H86V46C86 70 69 84 50 92 31 84 14 70 14 46Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M21 17H79V46C79 65 66 77 50 84 34 77 21 65 21 46Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="47" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">A</text></symbol>
+  <symbol id="hm-B" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="42" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><ellipse cx="50" cy="50" rx="33" ry="35" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">B</text></symbol>
+  <symbol id="hm-C" viewBox="0 0 100 100"><path d="M25 9H75L91 25V75L75 91H25L9 75V25Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M28 16H72L84 28V72L72 84H28L16 72V28Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">C</text></symbol>
+  <symbol id="hm-F" viewBox="0 0 100 100"><path d="M50 5L95 50 50 95 5 50Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M50 15L85 50 50 85 15 50Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="42" fill="currentColor">F</text></symbol>
+  <symbol id="hm-none" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 7"/><text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-size="38" fill="currentColor">?</text></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M8 16 16 8M9 8h7v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-4 16-4-7-8-1Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="nav is-scrolled" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./" aria-label="Credster home"><svg class="mark"><use href="#i-mark"/></svg><span>Credster</span></a>
+    <nav class="nav-links" aria-label="Pages">
+      <a href="./">The story</a>
+      <a href="live.html" class="is-active" aria-current="page">Try it live</a>
+      <a href="market.html" data-dash>Dashboard</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="icon-link" href="https://github.com/zkasuran/credster/blob/master/JUDGING.md" aria-label="Judging guide on GitHub"><svg><use href="#i-gh"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+  <section class="live-hero wrap">
+    <p class="label">Live on NEAR testnet</p>
+    <h1 class="live-title">Buy some credits. <em class="gold-text">Catch a cheat.</em></h1>
+    <p class="intro">This page trades on the real Credster contract. It runs real seller nodes, a real grader, and checks every signed receipt in your browser. You pay with free test NEAR from a throwaway account the page creates. There's nothing to install and no wallet.</p>
+    <ul class="status-row" data-status aria-live="polite">
+      <li class="chip"><span class="dot wait"></span>Connecting…</li>
+    </ul>
+  </section>
+
+  <div class="live-grid wrap">
+    <div class="col-main">
+
+      <!-- 1. Account -->
+      <article class="lcard" id="wallet" aria-labelledby="h-wallet">
+        <header class="lcard-head"><span class="step-dot">1</span><h2 id="h-wallet">Get test NEAR</h2></header>
+        <div data-wallet></div>
+      </article>
+
+      <!-- 2. Sellers -->
+      <article class="lcard" id="sellers" aria-labelledby="h-sellers">
+        <header class="lcard-head">
+          <span class="step-dot">2</span><h2 id="h-sellers">Pick a seller</h2>
+          <button type="button" class="icon-btn" data-refresh-listings aria-label="Refresh listings"><svg><use href="#i-refresh"/></svg></button>
+        </header>
+        <p class="lcard-note">The grader buys a trial order on every listing and probes it before anyone can trade. Sellers marked <b>cheats on purpose</b> run on this server so you can see what happens to them.</p>
+        <ol class="sellers" data-sellers><li class="empty">Loading listings…</li></ol>
+      </article>
+
+      <!-- 3. Order -->
+      <article class="lcard" id="order" aria-labelledby="h-order" hidden>
+        <header class="lcard-head"><span class="step-dot">3</span><h2 id="h-order">Open an order</h2></header>
+        <div data-order></div>
+      </article>
+
+      <!-- 4. Chat -->
+      <article class="lcard" id="chat" aria-labelledby="h-chat" hidden>
+        <header class="lcard-head"><span class="step-dot">4</span><h2 id="h-chat">Use it</h2><span class="lcard-meta" data-chat-meta></span></header>
+        <div class="budget" data-budget></div>
+        <ol class="convo" data-convo aria-live="polite"></ol>
+        <form class="composer" data-composer>
+          <label class="sr" for="prompt">Your prompt</label>
+          <textarea id="prompt" rows="2" maxlength="2000" placeholder="Ask the model something short…" required></textarea>
+          <button type="submit" class="btn btn-gold btn-sm" data-send><span>Send</span><svg><use href="#i-send"/></svg></button>
+        </form>
+        <div class="suggest" data-suggest></div>
+      </article>
+
+      <!-- 5. Bill -->
+      <article class="lcard" id="bill" aria-labelledby="h-bill" hidden>
+        <header class="lcard-head">
+          <span class="step-dot">5</span><h2 id="h-bill">Check the bill</h2>
+          <label class="switch"><input type="checkbox" data-auto-dispute checked><span>Auto-dispute</span></label>
+        </header>
+        <div data-bill></div>
+      </article>
+    </div>
+
+    <aside class="col-side">
+      <article class="lcard" id="sell" aria-labelledby="h-sell">
+        <header class="lcard-head"><span class="step-dot alt">S</span><h2 id="h-sell">Launch a seller</h2></header>
+        <div data-sell></div>
+      </article>
+
+      <article class="lcard" id="activity" aria-labelledby="h-activity">
+        <header class="lcard-head"><span class="step-dot alt">⁂</span><h2 id="h-activity">Market activity</h2></header>
+        <ol class="events" data-events aria-live="polite"><li class="empty">Waiting for the keeper…</li></ol>
+      </article>
+
+      <article class="lcard terminal-card" aria-labelledby="h-cli">
+        <header class="lcard-head"><span class="step-dot alt">$</span><h2 id="h-cli">Prefer a terminal?</h2></header>
+        <p class="lcard-note">The same market from the command line, with your own testnet account.</p>
+        <pre class="cli" data-cli></pre>
+        <a class="tx" href="https://github.com/zkasuran/credster/blob/master/JUDGING.md">Full judging guide<svg><use href="#i-out"/></svg></a>
+      </article>
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="foot-brand"><svg class="mark"><use href="#i-mark"/></svg><div><b>Credster</b><span>NEAR testnet. Test NEAR has no value.</span></div></div>
+    <p class="foot-disc">Your throwaway account's key is kept in this browser's local storage and never sent anywhere. Each order gets its own key, and every request to a seller is signed with it. Answers come from NEAR AI Cloud through the seller nodes, and each one carries a receipt signed by the node.</p>
+    <nav class="foot-links" aria-label="Footer"><a href="./">The story</a><a href="market.html" data-dash>Dashboard</a><a href="https://github.com/zkasuran/credster">GitHub</a></nav>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+<script type="module" src="site/js/live.js"></script>
+</body>
+</html>
