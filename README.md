@@ -63,9 +63,9 @@ The three F listings were suspended. Buying from them was refused (`listing grad
 
 Open the live server's `live.html`; [JUDGING.md](JUDGING.md) has the URL and a walkthrough. The page creates a throwaway testnet account in your browser and funds it from a faucet. Then you can:
 
-- buy from a graded seller (spot, pay-as-you-go tab, or bargaining with the seller's agent) and chat with it;
+- buy from a graded seller (spot, pay-as-you-go tab or bargaining with the seller's agent) and chat with it;
 - check each answer's node-signed receipt in the browser against the request and response bytes;
-- buy from the overclaiming seller, watch your page dispute its inflated claim, and get part of its bond;
+- buy from the overclaiming seller, watch your page dispute its inflated claim and get part of its bond;
 - launch a cheating seller and watch the grader fail it within a minute.
 
 The same live market works from the CLI (`node src/cli.js help`), including selling with your own NEAR AI Cloud key. `scripts/go-live.mjs` and `node src/cli.js live` run the server; see [JUDGING.md](JUDGING.md#running-the-live-server).
