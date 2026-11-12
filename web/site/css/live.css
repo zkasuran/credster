@@ -282,3 +282,5 @@
 .how-sell p { margin-top: 8px; color: var(--ink-3); font-size: 14px; line-height: 1.55; }
 .sell-card .lcard-head h2 { font-size: 1.6rem; }
 @media (max-width: 760px) { .how-sell { grid-template-columns: minmax(0, 1fr); } }
+
+.msg-a .text.is-empty { color: var(--ink-3); font-style: italic; font-size: 14px; }

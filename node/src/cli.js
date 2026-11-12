@@ -12,6 +12,8 @@ for (let i = 0; i < rest.length; i++) {
   else { a[k] = next; i++; }
 }
 
+// Keeps reasoning models' thinking short so the answer fits the token cap (see web/site/js/live.js).
+const briefFor = (model) => (String(model).startsWith("z-ai/") ? { reasoning_effort: "low" } : String(model).startsWith("Qwen/") ? { chat_template_kwargs: { enable_thinking: false } } : {});
 const need = (k) => {
   if (a[k] === undefined || a[k] === true) throw new Error(`missing --${k}`);
   return a[k];
@@ -227,7 +229,7 @@ const commands = {
     const { Buyer } = await import("./buyer.js");
     const order = await view("get_order", { order_id: String(need("order")) });
     const listing = await view("get_listing", { listing_id: order.listing_id });
-    const r = await new Buyer(need("buyer")).chat(need("order"), { model: listing.model, messages: [{ role: "user", content: need("prompt") }], max_tokens: Number(a["max-tokens"] || 512) }, { endpoint: a.endpoint });
+    const r = await new Buyer(need("buyer")).chat(need("order"), { model: listing.model, messages: [{ role: "user", content: need("prompt") }], max_tokens: Number(a["max-tokens"] || 1024), ...briefFor(listing.model) }, { endpoint: a.endpoint });
     if (!r.ok) throw new Error(`${r.status} ${r.error}`);
     console.log(r.json.choices[0].message.content);
     console.error(`receipt ${r.receiptOk ? "verified" : "INVALID"}: ${r.receipt.in} in / ${r.receipt.out} out, ${r.ms} ms`);

@@ -17,6 +17,14 @@ const TIER = { A: "TEE-signed", B: "no TEE for this model", C: "capped", F: "sus
 const PLAN = { A: 0.9, B: 0.8, C: 0.6 };
 const NS = 1_000_000n;
 const HONEST = new Set(["honest", "deepseek"]);
+// Per-model request options that keep a reasoning model's thinking short, so a chat
+// answer fits the node's token cap. Measured on NEAR AI Cloud, 12 Nov 2026: with 512
+// tokens and no option, glm-5.3-flash spent all 512 thinking and returned nothing.
+const BRIEF = [
+  ["z-ai/", { reasoning_effort: "low" }],
+  ["Qwen/", { chat_template_kwargs: { enable_thinking: false } }],
+];
+const briefFor = (model) => (BRIEF.find(([p]) => String(model).startsWith(p)) || [, {}])[1];
 const SUGGEST = ["In one sentence, what is a NEAR sub-account?", "Name two uses of a function-call access key, one line each.", "Write a four-line poem about honest metering."];
 
 const S = {
@@ -507,7 +515,7 @@ function renderConvo() {
     const r = m.receipt;
     const c = m.checks || {};
     const ok = (b, t) => `<span class="${b ? "ok" : "bad"}">${b ? "✓" : "✗"} ${esc(t)}</span>`;
-    return `<li class="msg-a"><div class="text">${esc(m.content)}</div>
+    return `<li class="msg-a"><div class="text${m.empty ? " is-empty" : ""}">${esc(m.content)}</div>
       ${r ? `<div class="receipt"><span>receipt #${esc(r.seq)} · ${esc(r.in)} in / ${esc(r.out)} out · ${esc(m.ms)} ms</span>
         ${ok(c.sig, "signed by the node key on chain")}${ok(c.req, "request hash")}${ok(c.resp, "response hash")}
         <details><summary>receipt text</summary><pre>${esc(m.text)}</pre></details></div>` : `<div class="receipt"><span class="bad">✗ no receipt came with this answer</span></div>`}
@@ -531,8 +539,8 @@ async function sendPrompt(prompt) {
   renderBudget();
   const key = await Key.fromString(rec.secret);
   const log = convo(id);
-  const history = log.filter((m) => (m.role === "user" || m.role === "assistant") && !m.error && !m.wait).slice(-6).map((m) => ({ role: m.role, content: m.content }));
-  const body = JSON.stringify({ model: l.model, messages: [...history, { role: "user", content: prompt.trim() }], max_tokens: Math.min(512, S.status?.limits?.max_tokens || 512) });
+  const history = log.filter((m) => (m.role === "user" || m.role === "assistant") && !m.error && !m.wait && !m.empty).slice(-6).map((m) => ({ role: m.role, content: m.content }));
+  const body = JSON.stringify({ model: l.model, messages: [...history, { role: "user", content: prompt.trim() }], max_tokens: S.status?.limits?.max_tokens || 1024, ...briefFor(l.model) });
   const bytes = utf8(body);
   const reqHash = await sha256hex(bytes);
   const ts = Date.now();
@@ -553,7 +561,12 @@ async function sendPrompt(prompt) {
     } else {
       const j = JSON.parse(fromUtf8(raw));
       const rt = res.headers.get("x-ts-receipt"), rs = res.headers.get("x-ts-receipt-sig");
-      const content = String(j.choices?.[0]?.message?.content ?? "").trim() || "(empty answer)";
+      const choice = j.choices?.[0] || {};
+      const said = String(choice.message?.content ?? "").trim();
+      const used = j.usage?.completion_tokens;
+      const content = said || (choice.finish_reason === "length"
+        ? `The model spent its whole ${used ? used + "-token " : ""}budget thinking and was cut off before it answered. Those tokens are still metered. Try a shorter question.`
+        : "The model returned an empty answer.");
       if (rt && rs) {
         const text = fromUtf8(fromB64(rt));
         const receipt = JSON.parse(text);
@@ -565,8 +578,8 @@ async function sendPrompt(prompt) {
         };
         const ok = checks.sig && checks.req && checks.resp && checks.order;
         ls.set(`receipts:${id}`, [...receipts(id), { text, sig: rs, ok, in: receipt.in, out: receipt.out, seq: receipt.seq }]);
-        entry = { role: "assistant", content, receipt, text, checks, ms };
-      } else entry = { role: "assistant", content, ms };
+        entry = { role: "assistant", content, receipt, text, checks, ms, empty: !said };
+      } else entry = { role: "assistant", content, ms, empty: !said };
     }
   } catch (e) {
     entry = { error: `Could not reach the seller node at ${new URL(l.endpoint).host}: ${e.message}` };
