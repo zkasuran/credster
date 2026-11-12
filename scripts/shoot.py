@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Screenshots of the dashboard, served from web/ by a throwaway local server.
+"""Screenshots of the dashboard (web/market.html), served from web/ by a throwaway local server.
 
 usage: python3 scripts/shoot.py OUT_DIR
 Writes dashboard.png (full page) and report.png (a grade report dialog).
@@ -26,7 +26,7 @@ base = f"http://127.0.0.1:{srv.server_address[1]}/"
 with sync_playwright() as p:
     b = p.chromium.launch()
     pg = b.new_page(viewport={"width": 1400, "height": 900}, device_scale_factor=2)
-    pg.goto(base)
+    pg.goto(base + "market.html")
     pg.wait_for_selector(".card", timeout=30000)
     pg.wait_for_timeout(800)
     pg.screenshot(path=str(out / "dashboard.png"), full_page=True)

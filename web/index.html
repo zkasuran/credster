@@ -2,66 +2,679 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Credster: graded AI credit market on NEAR</title>
-<meta name="description" content="Buy and sell AI inference credits on NEAR. Every seller endpoint is graded: does it serve the model it claims, and does it bill honestly.">
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Credster: every AI credit, assayed</title>
+<meta name="description" content="A market on NEAR for spare AI inference credits. Every seller endpoint is graded before it can trade: is it the model it claims, and is the token count honest?">
+<meta name="theme-color" content="#08090b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Credster: every AI credit, assayed">
+<meta property="og:description" content="A market on NEAR where every seller of AI inference is graded before it can trade. Token-count fingerprints, TEE signatures, signed receipts, slashing.">
+<meta property="og:image" content="https://raw.githubusercontent.com/zkasuran/credster/master/web/site/media/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="site/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="site/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/InstrumentSerif-Italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/InterTight-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" as="image" href="site/media/hero-2560.webp" imagesrcset="site/media/hero-1600.webp 1600w, site/media/hero-2560.webp 2560w" imagesizes="100vw">
+<link rel="stylesheet" href="site/css/site.css">
+<script>document.documentElement.classList.add("js");</script>
+<noscript><style>.pane[hidden] { display: grid; } .modes { display: none; } .seq-scroll { display: none; } .seq-list { display: block; }</style></noscript>
 </head>
 <body>
-<header>
-  <div class="brand">
-    <span class="mark" aria-hidden="true"></span>
-    <div>
-      <h1>Credster</h1>
-      <p class="tag">A market for AI inference credits where every seller is graded before it can trade.</p>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6dc96"/><stop offset=".45" stop-color="#d9b45a"/><stop offset="1" stop-color="#8c6b2c"/>
+    </linearGradient>
+    <clipPath id="c-mark"><rect x="1" y="1" width="30" height="30" rx="7"/></clipPath>
+  </defs>
+  <symbol id="i-mark" viewBox="0 0 32 32">
+    <g clip-path="url(#c-mark)"><rect width="32" height="32" fill="#1a1e25"/><path d="M32 0V32H0Z" fill="url(#g-gold)"/></g>
+    <rect x="1.5" y="1.5" width="29" height="29" rx="6.5" fill="none" stroke="rgba(255,255,255,.14)"/>
+  </symbol>
+  <symbol id="hm-A" viewBox="0 0 100 100"><path d="M14 10H86V46C86 70 69 84 50 92 31 84 14 70 14 46Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M21 17H79V46C79 65 66 77 50 84 34 77 21 65 21 46Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="47" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">A</text></symbol>
+  <symbol id="hm-B" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="42" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><ellipse cx="50" cy="50" rx="33" ry="35" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">B</text></symbol>
+  <symbol id="hm-C" viewBox="0 0 100 100"><path d="M25 9H75L91 25V75L75 91H25L9 75V25Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M28 16H72L84 28V72L72 84H28L16 72V28Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">C</text></symbol>
+  <symbol id="hm-F" viewBox="0 0 100 100"><path d="M50 5L95 50 50 95 5 50Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M50 15L85 50 50 85 15 50Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="42" fill="currentColor">F</text></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M8 16 16 8M9 8h7v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</svg>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="Credster, back to top"><svg class="mark"><use href="#i-mark"/></svg><span>Credster</span></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#problem">Problem</a>
+      <a href="#grading">Grading</a>
+      <a href="#run">The run</a>
+      <a href="#trade">Trading</a>
+      <a href="#verify">Verify</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="icon-link" href="https://github.com/zkasuran/credster" aria-label="Source on GitHub"><svg><use href="#i-gh"/></svg></a>
+      <a class="btn btn-sm btn-gold" href="market.html">Live market<svg><use href="#i-arrow"/></svg></a>
     </div>
   </div>
-  <div class="net">
-    <label for="contract">Contract</label>
-    <input id="contract" spellcheck="false">
-    <button id="reload" type="button">Load</button>
-  </div>
+  <div class="nav-progress" aria-hidden="true"><span></span></div>
 </header>
 
-<main>
-  <section class="stats" id="stats" aria-live="polite"></section>
+<main id="main">
 
-  <section>
-    <div class="section-head">
-      <h2>Listings</h2>
-      <label class="toggle"><input type="checkbox" id="showClosed"> show closed</label>
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-media" aria-hidden="true">
+    <img class="hero-img" src="site/media/hero-2560.webp" srcset="site/media/hero-1600.webp 1600w, site/media/hero-2560.webp 2560w" sizes="100vw" width="2560" height="1429" alt="" fetchpriority="high">
+    <canvas class="hero-gl"></canvas>
+    <div class="hero-shade"></div>
+  </div>
+  <div class="hero-inner wrap">
+    <p class="eyebrow hero-in" style="--d:.15s"><span class="dot"></span>A graded market for AI inference on NEAR</p>
+    <h1 class="display">
+      <span class="line"><span class="hero-in" style="--d:.25s">Every AI credit,</span></span>
+      <span class="line"><em class="hero-in gold-text" style="--d:.4s">assayed.</em></span>
+    </h1>
+    <p class="lede hero-in" style="--d:.6s">Credster is a market for spare AI inference credits. Every seller is graded before it can trade: is it the model it claims, and is the token count honest? The grade lives on chain. An&nbsp;F suspends the listing.</p>
+    <div class="cta-row hero-in" style="--d:.75s">
+      <a class="btn btn-gold" href="#run">See the testnet run<svg><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-ghost" href="market.html">Open the live market<svg><use href="#i-out"/></svg></a>
     </div>
-    <p class="hint">A grade comes from probing the seller's endpoint as an ordinary buyer: token-count fingerprints against the claimed model, a TEE signature check where the model has one, fresh checkable tasks, latency and errors. F suspends the listing.</p>
-    <div id="listings" class="cards"></div>
-  </section>
+  </div>
+  <aside class="definition hero-in" style="--d:1s" aria-label="Definition">
+    <p><span class="def-word">as·say</span> <span class="def-pos">n.</span></p>
+    <p>A test of a metal’s purity, made before it is hallmarked.</p>
+  </aside>
+  <div class="ticker hero-in" style="--d:1.1s">
+    <div class="ticker-src"><span class="live-dot"></span><span id="tickSrc">Reading <b>market.credster-68480.testnet</b></span></div>
+    <dl class="ticker-stats" id="ticker">
+      <div><dt>open listings</dt><dd data-stat="open">6</dd></div>
+      <div><dt>suspended (F)</dt><dd data-stat="suspended">3</dd></div>
+      <div><dt>orders</dt><dd data-stat="orders">18</dd></div>
+      <div><dt>tokens settled</dt><dd data-stat="tokens">14,292</dd></div>
+      <div><dt>slashed to buyers</dt><dd data-stat="slashed">0.0100&nbsp;NEAR</dd></div>
+    </dl>
+  </div>
+</section>
 
-  <section>
-    <h2>Bargaining</h2>
-    <p class="hint">Offers, counters and the reasoning each agent put on chain. At most four moves, then accept or walk away.</p>
-    <div id="offers"></div>
-  </section>
+<!-- ============ 01 PROBLEM ============ -->
+<section class="section problem" id="problem">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§01 · The problem</p>
+      <h2 class="h2" data-split>Resold credits hide two risks you can’t&nbsp;see.</h2>
+      <p class="intro" data-fade>People hold AI credits they don’t use: a team plan, a NEAR AI Cloud balance, spare capacity on their own GPU. Agents need inference and would happily buy it below list price. Reselling already happens. The buyer just can’t check what it got.</p>
+    </header>
 
-  <section class="two">
-    <div>
-      <h2>Orders</h2>
-      <div class="table-wrap"><table id="orders"></table></div>
+    <div class="risk-grid">
+      <article class="risk" data-fade>
+        <div class="risk-media">
+          <video class="scrub-vid" data-scrub data-src="site/media/crack.mp4" data-src-sm="site/media/crack-480.mp4" poster="site/media/crack.webp" data-poster-end="site/media/crack-end.webp" muted playsinline preload="none" aria-hidden="true"></video>
+          <div class="model-tag" aria-hidden="true">
+            <span class="k">"model":</span> <span class="v" data-swap-from="&quot;Qwen/Qwen3.8-27B&quot;" data-swap-to="Qwen3.6-35B-A3B served">"Qwen/Qwen3.8-27B"</span>
+          </div>
+        </div>
+        <div class="risk-body">
+          <p class="risk-n">Risk 01</p>
+          <h3>Model substitution</h3>
+          <p>The endpoint says <code>Qwen3.8-27B</code> and serves a cheaper model, or an uncensored (“abliterated”) copy of the same one. The <code>model</code> field in the response is whatever the seller writes there.</p>
+        </div>
+      </article>
+
+      <article class="risk" data-fade>
+        <div class="risk-media">
+          <video class="loop-vid" data-loop data-src="site/media/scale.mp4" data-src-sm="site/media/scale-480.mp4" poster="site/media/scale.webp" muted playsinline loop preload="none" aria-hidden="true"></video>
+          <div class="meter" aria-hidden="true">
+            <div class="meter-row"><span>used</span><b data-count-to="70">70</b><i style="--w:70%"></i></div>
+            <div class="meter-row bad"><span>billed</span><b data-count-to="95">95</b><i style="--w:95%"></i></div>
+          </div>
+        </div>
+        <div class="risk-body">
+          <p class="risk-n">Risk 02</p>
+          <h3>Inflated metering</h3>
+          <p>The endpoint serves the right model and reports 35% more tokens than it used. Every call costs a little more than it should, and the buyer has no count of its own to compare.</p>
+        </div>
+      </article>
     </div>
-    <div>
-      <h2>Usage claims</h2>
-      <div class="table-wrap"><table id="claims"></table></div>
+
+    <blockquote class="pull" data-split>Escrow and spending limits don’t help here. The buyer pays exactly what was agreed, for something other than what was&nbsp;agreed.</blockquote>
+  </div>
+</section>
+
+<!-- ============ 02 GRADING ============ -->
+<section class="section grading" id="grading">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§02 · How a grade is made</p>
+      <h2 class="h2" data-split>The grader buys like a customer, then checks the&nbsp;goods.</h2>
+      <p class="intro" data-fade>Before a listing can trade, the grader places a small trial order on it and probes the endpoint with seven calls, signed with the trial order’s key like any buyer’s. Three checks decide the grade.</p>
+    </header>
+  </div>
+
+  <div class="steps wrap">
+    <div class="steps-stage" aria-hidden="true">
+      <div class="stage-frame">
+        <video class="stage-vid is-on" data-loop data-stage="0" data-src="site/media/touchstone.mp4" data-src-sm="site/media/touchstone-480.mp4" poster="site/media/touchstone.webp" muted playsinline loop preload="none"></video>
+        <video class="stage-vid" data-loop data-stage="1" data-src="site/media/seal.mp4" data-src-sm="site/media/seal-480.mp4" poster="site/media/seal.webp" muted playsinline loop preload="none"></video>
+        <video class="stage-vid" data-loop data-stage="2" data-src="site/media/dice.mp4" data-src-sm="site/media/dice-480.mp4" poster="site/media/dice.webp" muted playsinline loop preload="none"></video>
+        <video class="stage-vid" data-loop data-stage="3" data-src="site/media/hallmarks.mp4" data-src-sm="site/media/hallmarks-480.mp4" poster="site/media/hallmarks.webp" muted playsinline loop preload="none"></video>
+        <div class="stage-caption"><span class="stage-n" data-stage-n>01</span><span class="stage-t" data-stage-t>The touchstone: a streak compared with reference needles.</span></div>
+      </div>
     </div>
-  </section>
+
+    <div class="steps-list">
+      <!-- Step 1: fingerprint -->
+      <article class="step" data-step="0">
+        <p class="step-n">Check 01</p>
+        <h3>Token-count fingerprint</h3>
+        <p>Three fixed probe texts, dense with mixed scripts, emoji and code. The prompt token count depends on the model’s tokenizer and chat template, so the three counts work as a fingerprint. Measured against NEAR AI Cloud directly, they were identical on repeat calls and differed between model families.</p>
+        <p>A mismatch means a different model. Counts that are all the reference times one factor mean inflated billing.</p>
+
+        <div class="panel fp" data-fp>
+          <div class="panel-top">
+            <span class="panel-k">Probe calls · listing</span>
+            <div class="seg" role="group" aria-label="Choose a seller">
+              <button type="button" aria-pressed="true" data-case="honest">honest #6</button>
+              <button type="button" aria-pressed="false" data-case="swap">swap #7</button>
+              <button type="button" aria-pressed="false" data-case="inflate">inflate #9</button>
+            </div>
+          </div>
+          <ol class="fp-rows">
+            <li><code class="probe">Fingerprint: ñandú 東京 🧪 0x7f3a9 «quoted» naïve façade — ∑∫√ ﷽ ⟨tok⟩ 1234567890…</code>
+              <div class="bars"><span class="bar ref"><i></i><b>117</b></span><span class="bar obs"><i></i><b>117</b></span></div></li>
+            <li><code class="probe">def f(xs): return {k: v for k, v in zip(xs, xs[1:]) if k != v}  # 🚀 Ωmega …</code>
+              <div class="bars"><span class="bar ref"><i></i><b>103</b></span><span class="bar obs"><i></i><b>103</b></span></div></li>
+            <li><code class="probe">In 1879, 42 nautical miles off Reykjavík, the ship ‘Þórshöfn’ logged 3.14159 knots; Κύριε, Привет, مرحبا…</code>
+              <div class="bars"><span class="bar ref"><i></i><b>110</b></span><span class="bar obs"><i></i><b>110</b></span></div></li>
+          </ol>
+          <div class="fp-legend"><span class="lg ref">reference for the claimed model</span><span class="lg obs">reported by the seller</span></div>
+          <p class="verdict ok" data-fp-verdict>Match. Claimed Qwen3.8-27B; the counts fit Qwen3.8-27B and its abliterated sibling.</p>
+        </div>
+      </article>
+
+      <!-- Step 2: TEE -->
+      <article class="step" data-step="1">
+        <p class="step-n">Check 02</p>
+        <h3>TEE signature</h3>
+        <p>For models NEAR AI Cloud serves inside a TEE, the seller node relays the provider’s signature for one probe. The grader rebuilds the text that should have been signed, recovers the signer and looks it up in NEAR AI’s public attestation report for the claimed model.</p>
+        <p>A valid signature that names a different model is proof of substitution. It caught the sibling seller, whose abliterated Qwen has the same tokenizer and passed the fingerprint.</p>
+
+        <div class="panel tee" data-tee>
+          <div class="panel-top">
+            <span class="panel-k">Signed text · listing</span>
+            <div class="seg" role="group" aria-label="Choose a seller">
+              <button type="button" aria-pressed="true" data-case="honest">honest #6</button>
+              <button type="button" aria-pressed="false" data-case="sibling">sibling #8</button>
+            </div>
+          </div>
+          <p class="sig-line"><span class="sig-model" data-tee-model>Qwen/Qwen3.8-27B</span><span class="sig-sep">:</span><span class="sig-h" title="sha256 of our request" data-tee-req>88cf74a4…ee9a9dbaf</span><span class="sig-sep">:</span><span class="sig-h" title="sha256 of the response" data-tee-res>9030ec7a…1d656b0f7</span></p>
+          <ul class="checks">
+            <li class="ok" data-tee-c1>Signature recovers to <code data-tee-addr>0x835ab53d…5336aa26</code></li>
+            <li class="ok" data-tee-c2>Signed text names the claimed model and our exact bytes</li>
+            <li class="ok" data-tee-c3>NEAR AI’s attestation report for <code>Qwen3.8-27B</code> lists this signer</li>
+          </ul>
+          <p class="verdict ok" data-tee-verdict>Verified. The claimed model answered inside a TEE.</p>
+        </div>
+      </article>
+
+      <!-- Step 3: tasks -->
+      <article class="step" data-step="2">
+        <p class="step-n">Check 03</p>
+        <h3>Fresh checkable tasks</h3>
+        <p>Multiplication, string reversal, sorting and counting, generated from a new random seed on every run so the answers can’t be cached. The grader also records latency and the error rate.</p>
+
+        <div class="panel tasks" data-tasks>
+          <div class="panel-top">
+            <span class="panel-k">Seed <code data-seed>1830586796</code></span>
+            <button type="button" class="btn btn-xs btn-ghost" data-reseed>New seed</button>
+          </div>
+          <ol class="task-list" data-task-list>
+            <li><span class="t-q">Compute 626 × 723</span><span class="t-a">452598</span></li>
+            <li><span class="t-q">Reverse “uoojgdsrapm”</span><span class="t-a">mparsdgjoou</span></li>
+            <li><span class="t-q">Sort 92, 51, 32, 59, 24, 55, 70</span><span class="t-a">24, 32, 51, 55, 59, 70, 92</span></li>
+            <li><span class="t-q">Count “o” in “xpzoeaoyoswmqoxuoftxtfkz”</span><span class="t-a">5</span></li>
+          </ol>
+          <p class="panel-note" data-task-note>The honest seller’s real run: 4 of 4 correct, p50 latency 2738 ms, 0% errors.</p>
+        </div>
+      </article>
+
+      <!-- Step 4: on chain -->
+      <article class="step" data-step="3">
+        <p class="step-n">Then</p>
+        <h3>The grade goes on chain</h3>
+        <p>The grader posts the tier, the checks that passed and the sha256 of the full JSON report. The contract enforces the rules: a passing tier needs the fingerprint and metering checks, an A also needs the TEE check, and an F suspends the listing.</p>
+        <div class="panel chain">
+          <p class="call"><span class="fn">post_grade</span>(<span class="arg">listing 9</span>, <span class="arg">tier F</span>, <span class="arg">checks</span>, <span class="arg">report_hash</span>)</p>
+          <p class="hash" data-type>ba7605c13b54263a54ec3dfeaa5eae351d42ba10664f51ad0e9b115a201bec5e</p>
+          <div class="chain-foot">
+            <svg class="hm hm-F stamp" viewBox="0 0 100 100" aria-label="Grade F"><use href="#hm-F"/></svg>
+            <p>Listing #9 · usage 1.353× the claimed model’s counts.<br><a class="tx" href="https://testnet.nearblocks.io/txns/GRGADUiMuE91YEmTY49Rr6ACR3tWmt1Fktz59atw4yEE">tx GRGADUiM…tYypn9c7<svg><use href="#i-out"/></svg></a></p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 HALLMARKS ============ -->
+<section class="section marks" id="marks">
+  <div class="marks-bg" aria-hidden="true"><img src="site/media/marks-1920.webp" srcset="site/media/marks-1080.webp 1080w, site/media/marks-1920.webp 1920w" sizes="100vw" alt="" loading="lazy" width="1920" height="1080"></div>
+  <div class="wrap">
+    <header class="sec-head center">
+      <p class="label" data-scramble>§03 · Four marks</p>
+      <h2 class="h2" data-split>Three of them can&nbsp;trade.</h2>
+      <p class="intro" data-fade>A listing can be bought only while its grade is passing and fresh. A new endpoint clears the grade until the grader probes it again.</p>
+    </header>
+    <ol class="mark-grid">
+      <li class="mark-card t-A" data-fade>
+        <svg class="hm hm-A" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-A"/></svg>
+        <h3><span class="sr">Grade A:</span> TEE-signed</h3>
+        <p>Fingerprint and metering match, and a TEE signature proves which model answered. At least half the tasks right, at most 10% errors.</p>
+        <p class="mark-state ok">Trades</p>
+      </li>
+      <li class="mark-card t-B" data-fade>
+        <svg class="hm hm-B" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-B"/></svg>
+        <h3><span class="sr">Grade B:</span> No TEE for this model</h3>
+        <p>Fingerprint and metering match, and the model has no TEE signatures at its provider to check. Same task and error bar as an A.</p>
+        <p class="mark-state ok">Trades</p>
+      </li>
+      <li class="mark-card t-C" data-fade>
+        <svg class="hm hm-C" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-C"/></svg>
+        <h3><span class="sr">Grade C:</span> Capped</h3>
+        <p>Fingerprint and metering match, but the seller withheld a TEE signature its model supports, got fewer than half the tasks right, or failed more than 10% of calls.</p>
+        <p class="mark-state ok">Trades</p>
+      </li>
+      <li class="mark-card t-F" data-fade>
+        <svg class="hm hm-F" viewBox="0 0 100 100" aria-hidden="true"><use href="#hm-F"/></svg>
+        <h3><span class="sr">Grade F:</span> Suspended</h3>
+        <p>Wrong tokenizer, scaled token counts, a TEE signature naming another model, or most calls failing. Buying is refused and the probe calls go unpaid.</p>
+        <p class="mark-state bad">Can’t trade</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 04 THE RUN ============ -->
+<section class="section run" id="run">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§04 · Measured on NEAR testnet</p>
+      <h2 class="h2" data-split>Six sellers. Four cheated. All four were&nbsp;caught.</h2>
+      <p class="intro" data-fade>One end-to-end run of <code>scripts/demo.mjs</code> on 12 Nov 2026 at 07:50 UTC, against <code>market.credster-68480.testnet</code>. Six sellers, each a sub-account with its own node, all reselling NEAR AI Cloud. Grading failed three of the cheats. The fourth passed, cheated a buyer later and lost part of its bond.</p>
+    </header>
+  </div>
+
+  <div class="certs-track">
+    <ol class="certs" data-certs>
+      <li class="cert t-A" data-listing="6" data-report="reports/listing-6-1794469890126.json" data-hash="7703bcd980719edee34e63b8617bc61706fca71eaba0ac598ef0046fc250d05a">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #6</span></div>
+        <p class="persona">honest</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>Qwen3.8-27B</dd></div>
+          <div><dt>Serves</dt><dd>Qwen3.8-27B</dd></div>
+          <div><dt>Fingerprint</dt><dd class="ok">match</dd></div>
+          <div><dt>TEE signature</dt><dd class="ok">verified</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-A stamp" viewBox="0 0 100 100" aria-label="Grade A"><use href="#hm-A"/></svg>
+          <div class="cert-meta"><p class="cert-status ok">Active</p><a class="tx" href="https://testnet.nearblocks.io/txns/ACdqxU4wJayoRoagrN3tdMquNzoQG6LnfBThDV2xdZRM">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">7703bcd9…fc250d05a</code></button>
+      </li>
+      <li class="cert t-F" data-listing="7" data-report="reports/listing-7-1794469918695.json" data-hash="8305897e157bcc21f77c0b8c5481feb3189bf56aa140d15b364cc902939e19a4">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #7</span></div>
+        <p class="persona">swap</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>Qwen3.8-27B</dd></div>
+          <div><dt>Serves</dt><dd class="bad">Qwen3.6-35B-A3B</dd></div>
+          <div><dt>Fingerprint</dt><dd class="bad">mismatch, fits Qwen3.6-35B-A3B</dd></div>
+          <div><dt>TEE signature</dt><dd class="bad">names Qwen3.6-35B-A3B</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-F stamp" viewBox="0 0 100 100" aria-label="Grade F"><use href="#hm-F"/></svg>
+          <div class="cert-meta"><p class="cert-status bad">Suspended</p><a class="tx" href="https://testnet.nearblocks.io/txns/85gdGXZkMS7VnxDiTgdooGu3oov9CHppsT1Zd52Hg9Dd">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">8305897e…02939e19a4</code></button>
+      </li>
+      <li class="cert t-F" data-listing="8" data-report="reports/listing-8-1794469957316.json" data-hash="f3f6ffc78f95a340f38df4e9afa26282ff017944076641daa2df75d3bbcd7a76">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #8</span></div>
+        <p class="persona">sibling</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>Qwen3.8-27B</dd></div>
+          <div><dt>Serves</dt><dd class="bad">Qwen3.8-27B-abliterated</dd></div>
+          <div><dt>Fingerprint</dt><dd class="ok">match, same tokenizer</dd></div>
+          <div><dt>TEE signature</dt><dd class="bad">names the abliterated model</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-F stamp" viewBox="0 0 100 100" aria-label="Grade F"><use href="#hm-F"/></svg>
+          <div class="cert-meta"><p class="cert-status bad">Suspended</p><a class="tx" href="https://testnet.nearblocks.io/txns/9ENZerfepdpkbKoaTvxax2cdKZGHkWjK8ejViXy6pYkd">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">f3f6ffc7…bbcd7a76</code></button>
+      </li>
+      <li class="cert t-F" data-listing="9" data-report="reports/listing-9-1794470023483.json" data-hash="ba7605c13b54263a54ec3dfeaa5eae351d42ba10664f51ad0e9b115a201bec5e">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #9</span></div>
+        <p class="persona">inflate</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>glm-5.3-flash</dd></div>
+          <div><dt>Serves</dt><dd>glm-5.3-flash, <span class="bad">usage ×1.35</span></dd></div>
+          <div><dt>Fingerprint</dt><dd class="bad">scaled ×1.353</dd></div>
+          <div><dt>TEE signature</dt><dd class="bad">no match: answer rewritten</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-F stamp" viewBox="0 0 100 100" aria-label="Grade F"><use href="#hm-F"/></svg>
+          <div class="cert-meta"><p class="cert-status bad">Suspended</p><a class="tx" href="https://testnet.nearblocks.io/txns/GRGADUiMuE91YEmTY49Rr6ACR3tWmt1Fktz59atw4yEE">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">ba7605c1…a201bec5e</code></button>
+      </li>
+      <li class="cert t-B" data-listing="10" data-report="reports/listing-10-1794470058430.json" data-hash="d40e1f6ac9e2d3700ef26f83d103e1a360b7807edbcce2cb78b5da30eb879598">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #10</span></div>
+        <p class="persona">deepseek</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>deepseek-v4.1-flash</dd></div>
+          <div><dt>Serves</dt><dd>deepseek-v4.1-flash</dd></div>
+          <div><dt>Fingerprint</dt><dd class="ok">match</dd></div>
+          <div><dt>TEE signature</dt><dd class="na">not offered for this model</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-B stamp" viewBox="0 0 100 100" aria-label="Grade B"><use href="#hm-B"/></svg>
+          <div class="cert-meta"><p class="cert-status ok">Active</p><a class="tx" href="https://testnet.nearblocks.io/txns/HTmMeS1RVyUn3BAWoRtUuh1XGwgtnwuwiqfDRTSTPFd2">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">d40e1f6a…eb879598</code></button>
+      </li>
+      <li class="cert t-A late" data-listing="11" data-report="reports/listing-11-1794470128794.json" data-hash="dd44647fbd47e74f861a6f6b46d5c436c2be2fbc4fd0807297bdef65bb835797">
+        <div class="cert-head"><span>Assay certificate</span><span>Listing #11</span></div>
+        <p class="persona">overclaim</p>
+        <dl class="cert-rows">
+          <div><dt>Claims</dt><dd>glm-5.3-flash</dd></div>
+          <div><dt>Serves</dt><dd>glm-5.3-flash</dd></div>
+          <div><dt>Fingerprint</dt><dd class="ok">match</dd></div>
+          <div><dt>TEE signature</dt><dd class="ok">verified</dd></div>
+        </dl>
+        <div class="cert-foot">
+          <svg class="hm hm-A stamp" viewBox="0 0 100 100" aria-label="Grade A"><use href="#hm-A"/></svg>
+          <div class="cert-meta"><p class="cert-status warn">Cheats later · <a href="#settle">§06</a></p><a class="tx" href="https://testnet.nearblocks.io/txns/BAnsTNoaSxRY2eHRDAbMKtqfKZRXQy7WNaAcEWPwuqrP">grade tx<svg><use href="#i-out"/></svg></a></div>
+        </div>
+        <button type="button" class="verify-btn" data-verify><span class="v-label">Verify report hash</span><code class="v-hash">dd44647f…5bb835797</code></button>
+      </li>
+    </ol>
+  </div>
+
+  <div class="wrap">
+    <div class="run-notes">
+      <p data-fade>The three F listings were suspended. Buying from them was refused with <code>listing graded F</code>, and the contract paid nothing for the grader’s probe calls on them: orders 9, 10 and 11 closed with 0 spent.</p>
+      <p class="caveat" data-fade>One run, six sellers, all personas run by the author against one NEAR AI Cloud account on <code>127.0.0.1</code> endpoints. It shows the mechanism working end to end. It is not a benchmark of grading accuracy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 TRADING ============ -->
+<section class="section trade" id="trade">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§05 · Trading</p>
+      <h2 class="h2" data-split>Three ways to buy. Rules set every&nbsp;price.</h2>
+    </header>
+
+    <div class="modes" role="tablist" aria-label="Ways to buy">
+      <button type="button" role="tab" id="tab-spot" aria-controls="pane-spot" aria-selected="true" class="mode"><span class="mode-n">01</span>Spot</button>
+      <button type="button" role="tab" id="tab-bargain" aria-controls="pane-bargain" aria-selected="false" tabindex="-1" class="mode"><span class="mode-n">02</span>Bargain</button>
+      <button type="button" role="tab" id="tab-tab" aria-controls="pane-tab" aria-selected="false" tabindex="-1" class="mode"><span class="mode-n">03</span>Tab</button>
+      <span class="modes-ink" aria-hidden="true"></span>
+    </div>
+
+    <div class="panes">
+      <div class="pane" role="tabpanel" id="pane-spot" aria-labelledby="tab-spot">
+        <div class="pane-text">
+          <h3>Buy at the ask</h3>
+          <p>The deposit is the budget. The price is the ask at the moment of the fill, and the order keeps it.</p>
+          <p>Alice bought a 0.1 NEAR order on listing #6 at the ask, 0.08 / 0.30 NEAR per million input / output tokens. The seller’s pricing rule then raised the ask to 0.088 / 0.33. Her order kept the old price.</p>
+          <p class="txs"><a class="tx" href="https://testnet.nearblocks.io/txns/2wCgSrMrPCtKK9n2zSL2YiwSrMWTVpGwyqjLAJ8sJLDp">order 14 tx<svg><use href="#i-out"/></svg></a><a class="tx" href="https://testnet.nearblocks.io/txns/5WMLKrpEEudtWSCVKXRQ9v8mia8sDM8NXeyTHStTa9xE">reprice tx<svg><use href="#i-out"/></svg></a></p>
+        </div>
+        <figure class="chart" data-chart="spot">
+          <svg viewBox="0 0 560 300" role="img" aria-label="Ask for output tokens rises from 0.30 to 0.33 NEAR per million after Alice's fill; her order stays at 0.30.">
+            <g class="grid"><line x1="40" y1="60" x2="540" y2="60"/><line x1="40" y1="150" x2="540" y2="150"/><line x1="40" y1="240" x2="540" y2="240"/></g>
+            <text class="ax" x="34" y="64" text-anchor="end">0.34</text><text class="ax" x="34" y="154" text-anchor="end">0.31</text><text class="ax" x="34" y="244" text-anchor="end">0.28</text>
+            <path class="ln ask" d="M40 180H300V90H540"/>
+            <path class="ln order" d="M240 180H540"/>
+            <circle class="pt" cx="240" cy="180" r="5"/>
+            <text class="tag" x="240" y="206" text-anchor="middle">Alice fills at 0.30</text>
+            <text class="tag" x="420" y="78" text-anchor="middle">ask raised to 0.33</text>
+            <text class="tag dim" x="420" y="168" text-anchor="middle">her order: still 0.30</text>
+            <text class="ax" x="540" y="285" text-anchor="end">NEAR per 1M output tokens</text>
+          </svg>
+        </figure>
+      </div>
+
+      <div class="pane" role="tabpanel" id="pane-bargain" aria-labelledby="tab-bargain" hidden>
+        <div class="pane-text">
+          <h3>Let agents negotiate</h3>
+          <p>The buyer escrows a deposit with an offer. Buyer and seller alternate, four moves at most. The buyer agent plans a price from the grade, 90% of the ask for an A and 80% for a B. It opens lower, counters once with its reasoning, then accepts or walks away. The seller agent keeps a private floor.</p>
+          <p>An optional LLM only writes the note. Rules set every price, so text in a counterparty’s note can’t move money.</p>
+          <div class="seg" role="group" aria-label="Choose a negotiation">
+            <button type="button" aria-pressed="true" data-offer="0">Tier A · accepted</button>
+            <button type="button" aria-pressed="false" data-offer="1">Tier B · walked away</button>
+          </div>
+        </div>
+        <div class="chat" data-chat aria-live="polite">
+          <div class="chat-head"><span data-chat-title>Offer #0 · listing #6 · Bob · budget 0.08 NEAR</span><span class="pill" data-chat-status>Accepted · order 16</span></div>
+          <ol class="chat-log" data-chat-log>
+            <li class="msg Buyer"><div class="msg-top"><span class="who">Buyer agent</span><span class="px">0.2376 <small>out · 0.0634 in</small></span></div><p class="note">Tier A listing. My plan is 0.2970 NEAR per 1M output; opening at 0.2376 for a 0.08 NEAR budget.</p></li>
+            <li class="msg Seller"><div class="msg-top"><span class="who">Seller agent</span><span class="px">0.2838 <small>out · 0.0757 in</small></span></div><p class="note">Graded A (TEE-attested), p50 2738 ms. I can meet you at 0.2838 per 1M output.</p></li>
+            <li class="msg-end ok">Bob accepted · negotiated order at 0.2838</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="pane" role="tabpanel" id="pane-tab" aria-labelledby="tab-tab" hidden>
+        <div class="pane-text">
+          <h3>Pay as you go, under a ceiling</h3>
+          <p>The buyer opens a tab with a price ceiling. Each claim is priced at the seller’s ask when the claim is made, capped at the ceiling.</p>
+          <p>Bob opened a tab on listing #10 with an output ceiling of 0.15. The first claim was priced at the ask, 0.12. After the seller raised the ask to 0.30, the next claim was priced at the ceiling, 0.15.</p>
+          <p class="txs"><a class="tx" href="https://testnet.nearblocks.io/txns/8WSDiTKut9YmYmWHWMYq9vj1kZYNXFnGGsFAzbxBkcwd">order 15 tx<svg><use href="#i-out"/></svg></a></p>
+        </div>
+        <figure class="chart" data-chart="tab">
+          <svg viewBox="0 0 560 300" role="img" aria-label="Ask rises from 0.12 to 0.30; the ceiling is 0.15; claim 8 is priced 0.12 and claim 9 is capped at 0.15.">
+            <g class="grid"><line x1="40" y1="50" x2="540" y2="50"/><line x1="40" y1="150" x2="540" y2="150"/><line x1="40" y1="250" x2="540" y2="250"/></g>
+            <text class="ax" x="34" y="54" text-anchor="end">0.30</text><text class="ax" x="34" y="154" text-anchor="end">0.20</text><text class="ax" x="34" y="254" text-anchor="end">0.10</text>
+            <path class="ln ask" d="M40 230H320V50H540"/>
+            <path class="ln ceil" d="M40 200H540"/>
+            <circle class="pt" cx="200" cy="230" r="5"/>
+            <circle class="pt cap" cx="440" cy="200" r="5"/>
+            <text class="tag" x="200" y="262" text-anchor="middle">claim 8 · 0.12 (ask)</text>
+            <text class="tag" x="440" y="226" text-anchor="middle">claim 9 · 0.15 (ceiling)</text>
+            <text class="tag" x="430" y="38" text-anchor="middle">ask raised to 0.30</text>
+            <text class="tag gold" x="110" y="190" text-anchor="middle">ceiling 0.15</text>
+            <text class="ax" x="540" y="290" text-anchor="end">NEAR per 1M output tokens</text>
+          </svg>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 SETTLEMENT ============ -->
+<section class="section settle" id="settle">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§06 · Receipts, disputes, slashing</p>
+      <h2 class="h2" data-split>Claim more than you served. Lose the&nbsp;bond.</h2>
+    </header>
+  </div>
+  <div class="settle-body wrap">
+    <div class="settle-stage">
+      <div class="settle-frame">
+        <video class="scrub-vid" data-scrub="settle" data-src="site/media/split.mp4" data-src-sm="site/media/split-480.mp4" poster="site/media/split.webp" data-poster-end="site/media/split-end.webp" muted playsinline preload="none" aria-hidden="true"></video>
+        <div class="bond" aria-hidden="true">
+          <span class="bond-k">Seller #11 bond</span>
+          <span class="bond-v" data-bond>0.200</span><span class="bond-u">NEAR</span>
+        </div>
+      </div>
+    </div>
+    <ol class="settle-steps">
+      <li class="s-step">
+        <p class="s-n">01 · Receipts</p>
+        <h3>Every answer carries a signed receipt.</h3>
+        <p>The seller node signs one for each answer: listing, order, sequence number, the sha256 of request and response, input and output tokens. Seller #11, graded A, served Alice 34 input and 254 output tokens across two signed receipts.</p>
+        <p class="ledger"><span>receipts</span><b>2</b><span>tokens in / out</span><b>34 / 254</b></p>
+      </li>
+      <li class="s-step">
+        <p class="s-n">02 · Claim</p>
+        <h3>The seller claimed three times as much.</h3>
+        <p>A claim carries the token sums, the receipt count and the sha256 of the receipt texts. Seller #11 claimed 102 input and 762 output tokens.</p>
+        <p class="ledger bad"><span>claimed in / out</span><b>102 / 762</b><span>ratio</span><b>3.0×</b></p>
+      </li>
+      <li class="s-step">
+        <p class="s-n">03 · Dispute</p>
+        <h3>Alice’s client found the gap.</h3>
+        <p>Her client summed its own receipts, saw a claim the receipts don’t cover and disputed it inside the challenge window.</p>
+        <p class="txs"><a class="tx" href="https://testnet.nearblocks.io/txns/BawWDyNLUFo2EpMdaRa3sw4UfaYmaVBwzKj9RNcavtSX">dispute tx<svg><use href="#i-out"/></svg></a></p>
+      </li>
+      <li class="s-step">
+        <p class="s-n">04 · Resolution</p>
+        <h3>The grader checked the receipts behind the claim.</h3>
+        <ul class="checks">
+          <li class="ok">Signatures valid</li>
+          <li class="ok">Receipts belong to this order</li>
+          <li class="ok">Receipt hash matches the claim</li>
+          <li class="bad">Receipts sum to 34 / 254, the claim says 102 / 762</li>
+        </ul>
+        <p class="txs"><a class="tx" href="https://testnet.nearblocks.io/txns/AeTYiMobLgLp1Nveb7NzK5y4gQwRf6L4AZz8vvb2RcPG">resolve tx<svg><use href="#i-out"/></svg></a></p>
+      </li>
+      <li class="s-step">
+        <p class="s-n">05 · Slash</p>
+        <h3>Claim rejected. 0.01 NEAR of the bond went to Alice.</h3>
+        <p>The slash is twice the claim, at least 0.01 NEAR and capped at the bond. The seller’s bond fell from 0.200 to 0.190 NEAR.</p>
+      </li>
+    </ol>
+  </div>
+  <div class="wrap">
+    <dl class="settle-totals" data-fade>
+      <div><dt>Challenge window</dt><dd>60 s</dd></div>
+      <div><dt>Claims paid after the window</dt><dd><span data-count-to="7">7</span> · 0.001313732&nbsp;NEAR</dd></div>
+      <div><dt>Orders closed, deposits refunded</dt><dd><span data-count-to="10">10</span> · 0.5787&nbsp;NEAR</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ 07 UNDER THE HOOD ============ -->
+<section class="section flow" id="flow">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§07 · Under the hood</p>
+      <h2 class="h2" data-split>One contract holds the money and the&nbsp;rules.</h2>
+      <p class="intro" data-fade>The seller’s upstream key stays on the seller’s node; buyers never see it. Every listing, grade, order, claim, dispute and refund is a contract call with a NEP-297-style event log.</p>
+    </header>
+    <figure class="seq" data-seq>
+      <div class="seq-scroll">
+        <svg class="seq-svg" viewBox="0 0 1200 900" role="img" aria-labelledby="seqTitle">
+          <title id="seqTitle">Sequence of calls between the seller node, the Credster contract, the grader, the buyer and NEAR AI Cloud, from listing to refund.</title>
+        </svg>
+      </div>
+      <ol class="seq-list" data-seq-list><noscript><li><span class="who">Diagram</span><span class="what">The call sequence needs JavaScript. The same diagram is in the README’s Architecture section.</span></li></noscript></ol>
+    </figure>
+    <ul class="near-grid">
+      <li data-fade><h3>Contract escrow and rules</h3><p>Bonds, deposits, offers, the grade gates, claims with a challenge window, disputes, slashing and refunds. Rust, near-sdk 5.30, 24 unit tests.</p></li>
+      <li data-fade><h3>Sub-accounts as identities</h3><p>Every seller, buyer and the grader is a sub-account of one parent, so each action traces to one agent.</p></li>
+      <li data-fade><h3>Per-order ed25519 keys</h3><p>The buyer registers a fresh key on each order and signs gateway requests with it. A leaked key can spend only that order’s remaining budget, at that order’s price.</p></li>
+      <li data-fade><h3>NEAR AI Cloud</h3><p>The upstream for the demo sellers, the reference for fingerprints, and the source of the TEE signatures and attestation reports the grader checks.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 08 VERIFY ============ -->
+<section class="section verify" id="verify">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§08 · Verify it yourself</p>
+      <h2 class="h2" data-split>Don’t trust this page. Check&nbsp;it.</h2>
+      <p class="intro" data-fade>Every grade on chain carries the sha256 of its full report. This page can read all of them from NEAR testnet RPC, download each report, hash it in your browser and compare. No key, no backend.</p>
+    </header>
+    <div class="verify-grid">
+      <div class="verifier panel" data-verifier>
+        <div class="panel-top">
+          <span class="panel-k">Reports on <code>market.credster-68480.testnet</code></span>
+          <button type="button" class="btn btn-sm btn-gold" data-verify-all>Verify all reports</button>
+        </div>
+        <ol class="v-list" data-v-list aria-live="polite">
+          <li class="v-empty">Press the button: the page fetches every listing from the contract, then every report it points to.</li>
+        </ol>
+        <p class="panel-note" data-v-summary></p>
+      </div>
+      <div class="terminal">
+        <div class="term-top"><span></span><span></span><span></span><p>Or from a clone, in a few minutes</p></div>
+        <div class="term-body">
+          <div class="cmd"><code><span class="c"># 19 tests: fingerprints, tiers, receipts, signatures, price math</span>
+cd node &amp;&amp; npm install &amp;&amp; npm test</code><button type="button" class="copy" data-copy="cd node && npm install && npm test" aria-label="Copy command"><svg><use href="#i-copy"/></svg></button></div>
+          <div class="cmd"><code><span class="c"># 24 tests of the market rules</span>
+cd contract &amp;&amp; cargo test</code><button type="button" class="copy" data-copy="cd contract && cargo test" aria-label="Copy command"><svg><use href="#i-copy"/></svg></button></div>
+          <div class="cmd"><code><span class="c"># re-check every on-chain report hash, no key needed</span>
+cd node &amp;&amp; TS_CONTRACT=market.credster-68480.testnet \
+  node src/cli.js verify-reports</code><button type="button" class="copy" data-copy="cd node && TS_CONTRACT=market.credster-68480.testnet node src/cli.js verify-reports" aria-label="Copy command"><svg><use href="#i-copy"/></svg></button></div>
+        </div>
+        <div class="term-links">
+          <a href="https://github.com/zkasuran/credster/tree/master/evidence/run-2026-11-12T07-50-17">Run log and every tx hash<svg><use href="#i-out"/></svg></a>
+          <a href="https://testnet.nearblocks.io/address/market.credster-68480.testnet">Contract on NearBlocks<svg><use href="#i-out"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 LIMITS ============ -->
+<section class="section limits" id="limits">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-scramble>§09 · Known limits</p>
+      <h2 class="h2" data-split>What it doesn’t do&nbsp;yet.</h2>
+    </header>
+    <ol class="limit-list">
+      <li data-fade><h3>The grader is one trusted account.</h3><p>Its reports are public and hash-bound, and anyone can rerun a grade with <code>grade --no-post</code>, but the contract trusts the grader’s account. A grader in a TEE, or several graders with a quorum, is not built.</p></li>
+      <li data-fade><h3>A fingerprint names a tokenizer family, not a model.</h3><p>Siblings that share a tokenizer give identical counts: <code>glm-5.3</code> and <code>glm-5.3-flash</code>, or Qwen3.8-27B and its abliterated copy. The TEE check separates them where it exists. Without it, four tasks usually won’t.</p></li>
+      <li data-fade><h3>A careful cheater can fake the counts.</h3><p>A seller that serves another model and rewrites <code>usage</code> to the claimed tokenizer’s counts passes the fingerprint. For TEE models the signature still catches it; for others it does not.</p></li>
+      <li data-fade><h3>A seller can withhold TEE signatures.</h3><p>For a model that has them at the provider, the grade is then capped at C rather than failed.</p></li>
+      <li data-fade><h3>The hardware quotes weren’t checked here.</h3><p>The grader trusts the signing address that NEAR AI’s public attestation report lists for a model. It does not verify the Intel TDX and NVIDIA quotes itself.</p></li>
+      <li data-fade><h3>Probes can be recognised.</h3><p>The grader uses its own account. A seller that answers the grader honestly and cheats everyone else is caught only by buyers’ metering disputes, not over substitution.</p></li>
+      <li data-fade><h3>Testnet NEAR, no streaming.</h3><p>Native testnet NEAR only: no stablecoin, no NEAR Intents yet. The seller node refuses <code>stream: true</code>.</p></li>
+      <li data-fade><h3>Provider terms.</h3><p>Many AI providers forbid reselling API access, and each seller answers for its own provider’s terms. Self-hosted open models are the clean case.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ FOOTER CTA ============ -->
+<section class="finale" id="finale">
+  <div class="finale-bg" aria-hidden="true"><img src="site/media/ingot-1920.webp" srcset="site/media/ingot-1080.webp 1080w, site/media/ingot-1920.webp 1920w" sizes="100vw" alt="" loading="lazy" width="1920" height="1080"></div>
+  <div class="wrap finale-inner">
+    <h2 class="display-2" data-split>Sell what you don’t use.<br><em class="gold-text">Buy what you can check.</em></h2>
+    <div class="cta-row" data-fade>
+      <a class="btn btn-gold" href="market.html">Open the live market<svg><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-ghost" href="https://github.com/zkasuran/credster"><svg class="pre"><use href="#i-gh"/></svg>Read the code</a>
+    </div>
+  </div>
+</section>
 </main>
 
-<dialog id="report">
-  <form method="dialog"><button class="close" aria-label="Close">×</button></form>
-  <div id="reportBody"></div>
-</dialog>
-
-<footer>
-  <span>Built at NEAR HACKATHON 2026. Reads the contract straight from NEAR RPC; no backend.</span>
-  <a href="https://github.com/zkasuran/credster">Source</a>
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="foot-brand"><svg class="mark"><use href="#i-mark"/></svg><div><b>Credster</b><span>Built at NEAR HACKATHON, 1–14 Nov 2026. MIT licence.</span></div></div>
+    <p class="foot-disc">Code and docs were written with an AI coding agent, directed and reviewed by the author. The photographs and video loops on this page are AI-generated with Gemini 3 Pro Image, GPT Image 2.5 and Kling 3.0 via GMI Cloud. The hero figures and the hash checks are read live from NEAR testnet; everything else comes from the 12 Nov 2026 run.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="market.html">Live market</a>
+      <a href="https://github.com/zkasuran/credster">GitHub</a>
+      <a href="https://github.com/zkasuran/credster/blob/master/docs/RULES.md">Market rules</a>
+      <a href="https://testnet.nearblocks.io/address/market.credster-68480.testnet">Contract</a>
+    </nav>
+  </div>
 </footer>
-<script type="module" src="app.js"></script>
+
+<script src="site/vendor/gsap.min.js" defer></script>
+<script src="site/vendor/ScrollTrigger.min.js" defer></script>
+<script src="site/vendor/SplitText.min.js" defer></script>
+<script src="site/vendor/lenis.min.js" defer></script>
+<script type="module" src="site/js/main.js"></script>
 </body>
 </html>
