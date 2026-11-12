@@ -6,7 +6,7 @@ Built at NEAR HACKATHON (Nov 1 to 14, 2026). Suggested tracks: `agents`, `securi
 
 **Live:** https://credster.store (trade on testnet from the browser: free test NEAR, buy, chat, dispute) · landing page mirror https://credster.vercel.app
 
-![Credster dashboard on NEAR testnet: six graded listings. The model swap, the sibling-model swap and the inflated-billing seller are suspended with grade F](assets/dashboard-top.png)
+![Credster dashboard for the recorded testnet run: 3 listings for sale, 3 suspended by grading, 18 orders, 14,292 tokens settled](assets/dashboard-top.png)
 
 ## The problem
 
@@ -75,7 +75,7 @@ The same live market works from the CLI (`node src/cli.js help`), including sell
 1. `cd node && npm install && npm test`: 19 tests (fingerprint rules, tiers, receipts, request signatures, EIP-191 recovery of a real NEAR AI signature, price math).
 2. `cd contract && cargo test`: 24 tests of the market rules (grading gates, spot, tab ceilings, bargaining limits, disputes and slashing, refunds, unpaid probe usage on F listings).
 3. `cd node && TS_CONTRACT=market.credster-68480.testnet node src/cli.js verify-reports`: reads all 12 grades from the testnet contract and checks that each report file in `web/reports/` hashes to the `report_hash` on chain.
-4. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080/market.html for the dashboard. It reads the testnet contract straight from NEAR RPC. Click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain. http://127.0.0.1:8080 is the landing page; its **Verify all reports** button runs the same check for all 12 grades.
+4. `python3 -m http.server -d web 8080`, open http://127.0.0.1:8080/market.html?contract=market.credster-68480.testnet for the dashboard of the recorded run. It reads the testnet contract straight from NEAR RPC. Open the suspended listings and click **grade report** on an F listing: the page downloads the report, hashes it in the browser and shows whether it matches the `report_hash` on chain. http://127.0.0.1:8080 is the landing page; its **Verify all reports** button runs the same check for all 12 grades.
 
 ![A grade F report for the inflate seller: the report hash matches the chain, observed token counts 95, 85, 100 against the reference 70, 63, 74, scaled by 1.353](assets/report-F.png)
 
@@ -172,7 +172,7 @@ sequenceDiagram
 | `scripts/go-live.mjs`, `Dockerfile`, `JUDGING.md` | set up and run the live market; guide for judges |
 | `node/fingerprints.json` | reference token counts measured from NEAR AI Cloud |
 | `web/index.html`, `web/site/` | landing page: the testnet run, live stats and in-browser report verification |
-| `web/market.html` | static dashboard of listings, offers, orders and claims |
+| `web/market.html` | dashboard of listings, offers, orders and claims, read from NEAR RPC; switches between the live market and the recorded run |
 | `web/reports/` | the published grade reports |
 | `scripts/` | `setup-testnet.sh`, `demo.mjs`, `cleanup.mjs`, `shoot.py` |
 | `docs/RULES.md`, `docs/DEDUPE.md` | market rules; comparison with the other 649 submissions |

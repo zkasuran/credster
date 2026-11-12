@@ -2,67 +2,122 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Credster: graded AI credit market on NEAR</title>
-<meta name="description" content="Buy and sell AI inference credits on NEAR. Every seller endpoint is graded: does it serve the model it claims, and does it bill honestly.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Credster market data: listings, grades, offers and payments on NEAR</title>
+<meta name="description" content="Every listing, grade, offer, order and payment on the Credster market, read straight from the NEAR contract. Hash-check any grade report in your browser.">
+<meta name="theme-color" content="#08090b">
+<!-- Address of the Credster live server. Leave empty when this page is served by it. -->
+<meta name="credster-api" content="https://credster.store">
+<meta property="og:title" content="Credster market data">
+<meta property="og:image" content="https://raw.githubusercontent.com/zkasuran/credster/master/web/site/media/og.jpg">
 <link rel="icon" href="site/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<link rel="preload" href="site/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/InterTight-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site/css/site.css">
+<link rel="stylesheet" href="site/css/live.css">
+<link rel="stylesheet" href="site/css/market.css">
 </head>
-<body>
-<header>
-  <div class="brand">
-    <span class="mark" aria-hidden="true"></span>
-    <div>
-      <h1><a href="./" class="home">Credster</a></h1>
-      <p class="tag">A market for AI inference credits where every seller is graded before it can trade.</p>
+<body class="live-page market-page">
+<a class="skip" href="#app">Skip to the market data</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc96"/><stop offset=".45" stop-color="#d9b45a"/><stop offset="1" stop-color="#8c6b2c"/></linearGradient>
+    <clipPath id="c-mark"><rect x="1" y="1" width="30" height="30" rx="7"/></clipPath>
+  </defs>
+  <symbol id="i-mark" viewBox="0 0 32 32"><g clip-path="url(#c-mark)"><rect width="32" height="32" fill="#1a1e25"/><path d="M32 0V32H0Z" fill="url(#g-gold)"/></g><rect x="1.5" y="1.5" width="29" height="29" rx="6.5" fill="none" stroke="rgba(255,255,255,.14)"/></symbol>
+  <symbol id="hm-A" viewBox="0 0 100 100"><path d="M14 10H86V46C86 70 69 84 50 92 31 84 14 70 14 46Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M21 17H79V46C79 65 66 77 50 84 34 77 21 65 21 46Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="47" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">A</text></symbol>
+  <symbol id="hm-B" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="42" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><ellipse cx="50" cy="50" rx="33" ry="35" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">B</text></symbol>
+  <symbol id="hm-C" viewBox="0 0 100 100"><path d="M25 9H75L91 25V75L75 91H25L9 75V25Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M28 16H72L84 28V72L72 84H28L16 72V28Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="50" fill="currentColor">C</text></symbol>
+  <symbol id="hm-F" viewBox="0 0 100 100"><path d="M50 5L95 50 50 95 5 50Z" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="3"/><path d="M50 15L85 50 50 85 15 50Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-opacity=".55"/><text x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="42" fill="currentColor">F</text></symbol>
+  <symbol id="hm-none" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 7"/><text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-size="38" fill="currentColor">?</text></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M8 16 16 8M9 8h7v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-4 16-4-7-8-1Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="nav is-scrolled" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./" aria-label="Credster home"><svg class="mark"><use href="#i-mark"/></svg><span>Credster</span></a>
+    <nav class="nav-links" aria-label="Pages">
+      <a href="./">The story</a>
+      <a href="live.html" data-live>Try it live</a>
+      <a href="market.html" class="is-active" aria-current="page">Dashboard</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="icon-link" href="https://github.com/zkasuran/credster" aria-label="Source on GitHub"><svg><use href="#i-gh"/></svg></a>
     </div>
-  </div>
-  <div class="net">
-    <label for="contract">Contract</label>
-    <input id="contract" spellcheck="false">
-    <button id="reload" type="button">Load</button>
   </div>
 </header>
 
-<main>
-  <section class="stats" id="stats" aria-live="polite"></section>
-
-  <section>
-    <div class="section-head">
-      <h2>Listings</h2>
-      <label class="toggle"><input type="checkbox" id="showClosed"> show closed</label>
+<main id="app">
+  <section class="live-hero wrap">
+    <p class="label">Market data · NEAR testnet</p>
+    <h1 class="live-title">The whole market, <em class="gold-text">on chain.</em></h1>
+    <p class="intro">Every listing, grade, offer, order and payment on Credster, read straight from the contract by your browser. No server sits in between, so what you see is what the chain holds.</p>
+    <div class="m-switch">
+      <div class="seg" role="group" aria-label="Which market" data-switch>
+        <button type="button" data-pick="live" aria-pressed="true">Live market</button>
+        <button type="button" data-pick="recorded" aria-pressed="false">Recorded run, 12 Nov</button>
+      </div>
+      <details class="m-other">
+        <summary>Another contract</summary>
+        <form data-other><input name="c" spellcheck="false" autocomplete="off" placeholder="market.example.testnet" aria-label="Contract account"><button type="submit" class="btn btn-ghost btn-xs">Load</button></form>
+      </details>
     </div>
-    <p class="hint">A grade comes from probing the seller's endpoint as an ordinary buyer: token-count fingerprints against the claimed model, a TEE signature check where the model has one, fresh checkable tasks, latency and errors. F suspends the listing.</p>
-    <div id="listings" class="cards"></div>
+    <p class="m-src" data-src></p>
   </section>
 
-  <section>
-    <h2>Bargaining</h2>
-    <p class="hint">Offers, counters and the reasoning each agent put on chain. At most four moves, then accept or walk away.</p>
-    <div id="offers"></div>
+  <section class="wrap">
+    <ul class="m-stats" data-stats aria-live="polite"><li class="m-stat"><b>…</b><span>loading</span></li></ul>
   </section>
 
-  <section class="two">
-    <div>
-      <h2>Orders</h2>
-      <div class="table-wrap"><table id="orders"></table></div>
-    </div>
-    <div>
-      <h2>Usage claims</h2>
-      <div class="table-wrap"><table id="claims"></table></div>
+  <section class="live-section wrap" id="listings" aria-labelledby="h-listings">
+    <header class="section-head m-head">
+      <div><p class="label">Listings</p><h2 id="h-listings">Who sells what, at what price</h2></div>
+      <label class="switch"><input type="checkbox" data-show-closed><span>Show closed</span></label>
+    </header>
+    <article class="lcard">
+      <p class="lcard-note">Each listing is one seller's endpoint for one model. Its grade comes from the grader buying a trial order and checking the endpoint: token counts against the claimed model, a TEE signature where the model has one, fresh tasks, speed and errors. Open a grade report to hash it in your browser against the hash on chain.</p>
+      <ol class="sellers m-listings" data-listings><li class="empty">Loading listings…</li></ol>
+    </article>
+  </section>
+
+  <section class="live-section wrap" id="offers" aria-labelledby="h-offers">
+    <header class="section-head"><p class="label">Bargaining</p><h2 id="h-offers">Offers and counter-offers</h2></header>
+    <p class="lcard-note m-lead">Each move is a transaction, with the note the buyer or seller put on chain. Four moves at most, then accept or walk away.</p>
+    <div class="m-offers" data-offers></div>
+  </section>
+
+  <section class="live-section wrap" id="money" aria-labelledby="h-money">
+    <header class="section-head"><p class="label">Settlement</p><h2 id="h-money">Orders and payments</h2></header>
+    <div class="m-two">
+      <article class="lcard">
+        <header class="lcard-head"><h2 class="m-h3">Orders</h2><span class="lcard-meta">deposits held by the contract</span></header>
+        <div class="m-table"><table data-orders></table></div>
+      </article>
+      <article class="lcard">
+        <header class="lcard-head"><h2 class="m-h3">Usage claims</h2><span class="lcard-meta">paid after the challenge window</span></header>
+        <div class="m-table"><table data-claims></table></div>
+      </article>
     </div>
   </section>
 </main>
 
-<dialog id="report">
-  <form method="dialog"><button class="close" aria-label="Close">×</button></form>
-  <div id="reportBody"></div>
+<dialog class="m-dialog" data-report aria-labelledby="h-report">
+  <form method="dialog"><button class="icon-btn m-close" aria-label="Close">×</button></form>
+  <div data-report-body></div>
 </dialog>
 
-<footer>
-  <span>Built at NEAR HACKATHON 2026. Reads the contract straight from NEAR RPC; no backend.</span>
-  <span><a href="live.html">Try it live</a> · <a href="https://github.com/zkasuran/credster">Source</a></span>
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="foot-brand"><svg class="mark"><use href="#i-mark"/></svg><div><b>Credster</b><span>NEAR testnet. Read straight from NEAR RPC.</span></div></div>
+    <nav class="foot-links" aria-label="Footer"><a href="./">The story</a><a href="live.html" data-live>Try it live</a><a href="https://github.com/zkasuran/credster">GitHub</a></nav>
+  </div>
 </footer>
-<script type="module" src="app.js"></script>
+<script type="module" src="site/js/market.js"></script>
 </body>
 </html>

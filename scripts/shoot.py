@@ -26,17 +26,20 @@ base = f"http://127.0.0.1:{srv.server_address[1]}/"
 with sync_playwright() as p:
     b = p.chromium.launch()
     pg = b.new_page(viewport={"width": 1400, "height": 900}, device_scale_factor=2)
-    pg.goto(base + "market.html")
-    pg.wait_for_selector(".card", timeout=30000)
+    # The recorded run is the one the README describes.
+    pg.goto(base + "market.html?contract=market.credster-68480.testnet")
+    pg.wait_for_selector(".srow", timeout=30000)
     pg.wait_for_timeout(800)
     pg.screenshot(path=str(out / "dashboard.png"), full_page=True)
     pg.screenshot(path=str(out / "dashboard-top.png"))
     for label in sys.argv[2:] or ["F"]:
-        btn = pg.locator(f".card:has(.grade.{label}) [data-report]").first
+        if pg.locator("details.off-list:not([open])").count():
+            pg.click("details.off-list summary")
+        btn = pg.locator(f".srow:has(.hm-{label}) [data-rep]").first
         btn.click()
-        pg.wait_for_selector("#reportBody h2", timeout=30000)
+        pg.wait_for_selector(".m-hash", timeout=30000)
         pg.wait_for_timeout(500)
-        pg.locator("dialog").screenshot(path=str(out / f"report-{label}.png"))
+        pg.locator("dialog[data-report]").screenshot(path=str(out / f"report-{label}.png"))
         pg.keyboard.press("Escape")
     b.close()
 srv.shutdown()
