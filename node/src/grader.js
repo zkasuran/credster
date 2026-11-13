@@ -10,6 +10,7 @@ import { view, viewAll, call, near, fmtNear } from "./near.js";
 import { sha256hex, recoverEip191, verifyReceipt, receiptsHash } from "./sign.js";
 import { FINGERPRINT_PROBES, fingerprintRequest, capabilityTasks, capabilityRequest, randomProbes } from "./probes.js";
 import { verifyHardware } from "./attest.js";
+import { planVisit } from "./shopper.js";
 import { Buyer } from "./buyer.js";
 import { teeCapable, checkAnswer } from "./tee.js";
 
@@ -63,7 +64,12 @@ const liveRefs = new Map(); // model -> { at, counts }
 const providerKey = () => process.env.TS_PROVIDER_KEY || process.env.NEARAI_API_KEY || process.env.TS_UPSTREAM_KEY || "";
 
 export async function liveReference(model, probes = FINGERPRINT_PROBES) {
-  const cacheKey = `${model}\n${probes.join("\n")}`;
+  return liveReferenceFor(probes.map((_, i) => fingerprintRequest(model, i, probes)));
+}
+
+/** Reference prompt token counts for these exact request bodies (max_tokens lowered, it does not change the prompt). */
+export async function liveReferenceFor(bodies) {
+  const cacheKey = JSON.stringify(bodies);
   const hit = liveRefs.get(cacheKey);
   if (hit && Date.now() - hit.at < 30 * 60_000) return hit;
   const key = providerKey();
@@ -72,7 +78,7 @@ export async function liveReference(model, probes = FINGERPRINT_PROBES) {
     const runs = [];
     for (let run = 0; run < 2; run++) {
       const counts = [];
-      for (let i = 0; i < probes.length; i++) counts.push((await providerChat(key, fingerprintRequest(model, i, probes))).usage.prompt_tokens);
+      for (const b of bodies) counts.push((await providerChat(key, { ...b, max_tokens: 16 })).usage.prompt_tokens);
       runs.push(counts);
     }
     if (JSON.stringify(runs[0]) !== JSON.stringify(runs[1])) return null; // not stable right now
@@ -212,23 +218,35 @@ export function decideTier({ fingerprint, attestation, capabilityPct, errorPct }
  */
 const WORDS = ["amber", "otter", "maple", "quartz", "harbor", "lumen", "cedar", "falcon", "juniper", "nova", "pebble", "sable", "tundra", "willow", "zephyr", "basil", "cobalt", "dune", "ember", "fjord"];
 
-export async function newShopper(grader, amount = near("0.12")) {
-  const { newKeyPair, saveKey, transfer, balance } = await import("./near.js");
-  // Preferred: a named account from the public testnet faucet, like any outside
-  // buyer's. Nothing on chain links it to the grader.
-  if (process.env.TS_SHOPPER_FAUCET !== "0") {
-    try {
-      const w = () => WORDS[randomInt(WORDS.length)];
-      const id = `${w()}-${w()}-${randomInt(1000, 99999)}.testnet`;
-      const kp = newKeyPair();
-      saveKey(id, kp);
-      const r = await fetch(process.env.TS_HELPER_URL || "https://helper.nearprotocol.com/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ newAccountId: id, newAccountPublicKey: kp.getPublicKey().toString() }), signal: AbortSignal.timeout(60_000) });
-      if (r.ok) {
-        for (let i = 0; i < 20 && (await balance(id)) === null; i++) await new Promise((s) => setTimeout(s, 1500));
-        if ((await balance(id)) !== null) return { id, funding: "testnet faucet" };
-      }
-    } catch {}
+/**
+ * One named account from the public testnet faucet, like any outside buyer's.
+ * Nothing on chain links it to the grader. Returns { id } or { retryAfterMs }.
+ */
+export async function faucetShopper() {
+  const { newKeyPair, saveKey, balance, forgetKey } = await import("./near.js");
+  const w = () => WORDS[randomInt(WORDS.length)];
+  const id = `${w()}-${w()}-${randomInt(1000, 99999)}.testnet`;
+  const kp = newKeyPair();
+  saveKey(id, kp);
+  try {
+    const r = await fetch(process.env.TS_HELPER_URL || "https://helper.nearprotocol.com/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ newAccountId: id, newAccountPublicKey: kp.getPublicKey().toString() }), signal: AbortSignal.timeout(60_000) });
+    if (!r.ok) {
+      forgetKey(id);
+      const t = await r.text();
+      const m = t.match(/retry in (\d+) (minute|hour)/i);
+      return { retryAfterMs: m ? Number(m[1]) * (m[2].toLowerCase() === "hour" ? 3600_000 : 60_000) + 60_000 : 30 * 60_000, error: `${r.status} ${t.slice(0, 120)}` };
+    }
+    for (let i = 0; i < 20 && (await balance(id)) === null; i++) await new Promise((s) => setTimeout(s, 1500));
+    if ((await balance(id)) === null) return { retryAfterMs: 10 * 60_000, error: `${id} did not appear` };
+    return { id };
+  } catch (e) {
+    return { retryAfterMs: 10 * 60_000, error: e.message.slice(0, 120) };
   }
+}
+
+/** A grader-funded implicit account: traceable to the grader on chain, a last resort. */
+export async function graderShopper(grader, amount = near("0.12")) {
+  const { newKeyPair, saveKey, transfer } = await import("./near.js");
   const { baseDecode } = await import("near-api-js");
   const kp = newKeyPair();
   const id = Buffer.from(baseDecode(kp.getPublicKey().toString().split(":")[1])).toString("hex");
@@ -246,8 +264,13 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
 
   // 1. An order bought like any other buyer: a trial order on an ungraded
   //    listing, or an ordinary spot order from a mystery shopper on a graded one.
-  const { value: orderId, txHash: orderTx } = await buyer.buySpot(listingId, trialDeposit);
-  log(`  ${shopper ? "mystery-shopper" : "trial"} order ${orderId} (${fmtNear(trialDeposit)} NEAR) tx ${orderTx}`);
+  const plan = shopper ? planVisit(listing.model, { maxTokens: Number(process.env.TS_NODE_MAX_TOKENS || 2048), ask: true }) : null;
+  const deposit = plan ? near(String(plan.deposit)) : trialDeposit;
+  const up = (y) => String((BigInt(y) * 5n) / 4n);
+  const { value: orderId, txHash: orderTx } = plan?.kind === "tab"
+    ? await buyer.openTab(listingId, up(listing.ask_in), up(listing.ask_out), deposit)
+    : await buyer.buySpot(listingId, deposit);
+  log(`  ${shopper ? `mystery-shopper ${plan.kind}` : "trial"} order ${orderId} (${fmtNear(deposit)} NEAR) tx ${orderTx}`);
 
   const calls = [];
   const run = async (kind, body) => {
@@ -262,42 +285,48 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     }
   };
 
-  // 2. Fingerprint probes: fresh random texts for every grade when the grader can
-  //    measure their reference at the provider, the fixed texts otherwise.
+  // 2. Requests. A trial grade sends probes and tasks back to back. A mystery shopper
+  //    sends natural requests in the live page's shape, shuffled, with pauses.
   const probeSeed = randomInt(1, 2 ** 31);
-  const probes = providerKey() ? randomProbes(probeSeed) : FINGERPRINT_PROBES;
-  const fp = [];
-  for (let i = 0; i < probes.length; i++) fp.push(await run("fingerprint", fingerprintRequest(listing.model, i, probes)));
+  const probes = plan ? null : providerKey() ? randomProbes(probeSeed) : FINGERPRINT_PROBES;
+  const fpBodies = plan ? plan.fingerprint : probes.map((_, i) => fingerprintRequest(listing.model, i, probes));
+  const capSeed = randomInt(1, 2 ** 31);
+  const taskList = plan ? plan.tasks : capabilityTasks(capSeed).map((t) => ({ ...t, body: capabilityRequest(listing.model, t) }));
+  const steps = plan ? plan.steps : [...fpBodies.map((body, i) => ({ kind: "fingerprint", i, body })), ...taskList.map((t, i) => ({ kind: "capability", i, body: t.body }))];
+  const fp = [], capResults = [];
+  for (const [k, st] of steps.entries()) {
+    if (plan?.gaps[k]) await new Promise((res) => setTimeout(res, plan.gaps[k]));
+    const r = await run(st.kind, st.body);
+    (st.kind === "fingerprint" ? fp : capResults)[st.i] = r;
+  }
   const observed = fp.map((r) => r.json?.usage?.prompt_tokens ?? null);
   const fixed = probes === FINGERPRINT_PROBES;
   const stored = fixed && refs.models[listing.model]?.stable ? refs.models[listing.model].counts : null;
-  const live = await liveReference(listing.model, probes);
+  const live = await liveReferenceFor(fpBodies);
   if (!fixed) for (const m of Object.keys(refs.models)) if (m !== listing.model) refs.models[m] = { ...refs.models[m], stable: false };
   const reference = live?.counts || stored;
   // "looks like" compares against live references of the same provider family when available.
   const family = String(listing.model).split("/")[0];
   for (const m of Object.keys(refs.models).filter((m) => m.split("/")[0] === family && m !== listing.model)) {
-    const lr = observed.every((x) => typeof x === "number") && JSON.stringify(observed) !== JSON.stringify(reference) ? await liveReference(m, probes) : null;
+    const lr = observed.every((x) => typeof x === "number") && JSON.stringify(observed) !== JSON.stringify(reference) ? await liveReferenceFor(fpBodies.map((b) => ({ ...b, model: m }))) : null;
     if (lr) refs.models[m] = { ...refs.models[m], counts: lr.counts, stable: true };
   }
   if (live) refs.models[listing.model] = { ...refs.models[listing.model], counts: live.counts, stable: true };
   const fingerprint = {
     observed, reference, ...compareFingerprint(observed, reference), looks_like: identify(observed, refs),
     reference_source: live ? `measured at ${PROVIDER} during this grade (${live.measured_at})` : "fingerprints.json",
-    probes: fixed ? "fixed" : { seed: probeSeed, texts: probes },
+    probes: fixed ? "fixed" : plan ? { natural: true, seed: plan.seed, texts: fpBodies.map((b) => b.messages[0].content) } : { seed: probeSeed, texts: probes },
     ...(live && stored && JSON.stringify(stored) !== JSON.stringify(live.counts) ? { stored_reference: stored } : {}),
   };
   log(`  fingerprint observed ${JSON.stringify(observed)} reference ${JSON.stringify(reference)} -> ${fingerprint.verdict}${fingerprint.looks_like.length ? " (matches " + fingerprint.looks_like.join(", ") + ")" : ""}`);
 
-  // 3. Fresh checkable tasks.
-  const seed = randomInt(1, 2 ** 31);
-  const tasks = capabilityTasks(seed);
-  const capability = [];
-  for (const t of tasks) {
-    const r = await run("capability", capabilityRequest(listing.model, t));
+  // 3. Checkable tasks, already sent above.
+  const seed = plan ? plan.seed : capSeed;
+  const capability = taskList.map((t, i) => {
+    const r = capResults[i] || {};
     const text = r.json?.choices?.[0]?.message?.content ?? "";
-    capability.push({ id: t.id, prompt: t.prompt, answer: String(text).trim().slice(-80), correct: r.ok && t.check(text) });
-  }
+    return { id: t.id, prompt: t.prompt, answer: String(text).trim().slice(-80), correct: !!r.ok && t.check(text) };
+  });
   const capabilityPct = Math.round((100 * capability.filter((c) => c.correct).length) / capability.length);
   log(`  capability ${capability.map((c) => `${c.id}:${c.correct ? "ok" : "x"}`).join(" ")} = ${capabilityPct}%`);
 
@@ -323,7 +352,8 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     listing: { id: String(listingId), seller: listing.seller, model: listing.model, endpoint: listing.endpoint, node_key: listing.node_key, ask_in: listing.ask_in, ask_out: listing.ask_out },
     trial_order: { id: String(orderId), tx: orderTx, buyer: shopper || grader, mystery_shopper: !!shopper, funded_by: shopper ? shopperFunding : undefined },
     fingerprint,
-    probes_sha256: sha256hex(JSON.stringify(probes)),
+    probes_sha256: sha256hex(JSON.stringify(fpBodies)),
+    visit: plan ? { style: "natural", kind: plan.kind, deposit: String(plan.deposit), gaps_sec: plan.gaps.map((g) => Math.round(g / 1000)), close_after_min: Math.round(plan.closeAfterMs / 60_000) } : { style: "trial" },
     capability: { seed, pct: capabilityPct, tasks: capability },
     attestation,
     calls: { total: calls.length, ok: okCalls.length, error_pct: errorPct, p50_latency_ms: latency, receipts_ok: receiptsOk, detail: calls },
@@ -354,9 +384,11 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     tx = r.txHash;
     log(`  posted grade tx ${tx}`);
   }
-  // The trial order is closed at once; the seller can still claim what it served.
-  await buyer.close(orderId).catch((e) => log(`  close trial order: ${e.message.slice(0, 120)}`));
-  return { report, hash, file: fileName, tx, orderId };
+  // A trial order is closed at once. A shopper keeps its order open for a while, like a
+  // customer who might come back, unless the listing just failed (then it leaves now).
+  const closeAt = plan && decision.tier !== "F" ? Date.now() + plan.closeAfterMs : 0;
+  if (!closeAt) await buyer.close(orderId).catch((e) => log(`  close order: ${e.message.slice(0, 120)}`));
+  return { report, hash, file: fileName, tx, orderId, closeAt };
 }
 
 /**

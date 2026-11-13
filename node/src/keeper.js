@@ -14,9 +14,11 @@
 // Everything it does is an ordinary contract call that anyone (or the grader,
 // for grades and disputes) could make; the keeper only saves the typing.
 import { view, viewAll, call, balance, near, fmtNear } from "./near.js";
-import { gradeListing, resolveDisputes, newShopper, auditShop, postAuditGrade } from "./grader.js";
+import { gradeListing, resolveDisputes, faucetShopper, graderShopper, auditShop, postAuditGrade } from "./grader.js";
+import { path, readJson, writeJson } from "./store.js";
 import { deleteAccount, forgetKey } from "./near.js";
 import { SellerAgent } from "./agents.js";
+import { Buyer } from "./buyer.js";
 
 const NS_PER_MS = 1_000_000n;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -46,6 +48,7 @@ export function createKeeper({
   mysteryMaxSec = Number(process.env.TS_MYSTERY_MAX_SEC || 4 * 3600),
   maxGradesPerDay = 300,
   gradeTimeoutMs = 10 * 60_000,
+  shopTimeoutMs = 30 * 60_000, // a mystery-shopper visit paces its calls like a person
   log = console.log,
 } = {}) {
   const events = [];
@@ -63,6 +66,18 @@ export function createKeeper({
   const busy = new Set(); // "claim:1", "order:2", "offer:3": one action in flight per item
   const wanted = []; // listing ids to grade before anything else
   const shops = []; // { shopper, orderId, listingId, until, disputed: Set }
+  // Faucet-funded shopper accounts made ahead of time: the public faucet allows about
+  // one an hour per address, and each account is used for one visit only.
+  const poolFile = path("shopper-pool.json");
+  const pool = readJson(poolFile, { ids: [], nextAt: 0 });
+  const poolTarget = Number(process.env.TS_SHOPPER_POOL || 6);
+  async function fillPool() {
+    if (process.env.TS_SHOPPER_FAUCET === "0" || pool.ids.length >= poolTarget || Date.now() < pool.nextAt) return;
+    const r = await faucetShopper();
+    if (r.id) { pool.ids.push(r.id); pool.nextAt = Date.now() + 62 * 60_000; log(`[keeper] (private) shopper pool +1 (${pool.ids.length})`); }
+    else { pool.nextAt = Date.now() + r.retryAfterMs; log(`[keeper] (private) faucet: ${r.error}; next try in ${Math.round(r.retryAfterMs / 60_000)} min`); }
+    writeJson(poolFile, pool);
+  }
   // A stable random delay per (listing, grade time), so the next visit can't be predicted from the last.
   const mysteryDue = (l) => {
     const t = Number(BigInt(l.grade.graded_at) / NS_PER_MS);
@@ -174,6 +189,10 @@ export function createKeeper({
     // Mystery-shopper bills: the seller claims within seconds; the shopper audits
     // each claim against its own receipts before the challenge window closes.
     for (const s of [...shops]) {
+      if (s.closeAt && Date.now() >= s.closeAt) {
+        s.closeAt = 0;
+        await new Buyer(s.shopper).close(s.orderId).then(() => log(`[keeper] (private) shopper closed order ${s.orderId} on listing ${s.listingId}`)).catch((e) => log(`[keeper] shopper close: ${e.message.slice(0, 120)}`));
+      }
       if (Date.now() > s.until) {
         const o = await view("get_order", { order_id: s.orderId }).catch(() => null);
         if (o?.status === "Closed" || Date.now() > s.until + 30 * 60_000) {
@@ -202,6 +221,7 @@ export function createKeeper({
         }
       });
     }
+    await once("pool", fillPool);
     stats.settleTicks++;
     stats.lastSettleAt = Date.now();
   }
@@ -256,14 +276,30 @@ export function createKeeper({
     // A graded listing gets a mystery shopper: an ordinary order from a fresh account.
     let shopper = null, shopperFunding = null;
     if (l.grade) {
-      try { ({ id: shopper, funding: shopperFunding } = await newShopper(grader)); } catch (e) { return backoff(id, `could not fund a mystery shopper: ${e.message.slice(0, 80)}`); }
+      // Fall back to a grader-funded (traceable) shopper only when the grade is about to go stale.
+      const c = await config();
+      const staleSoon = Number(BigInt(l.grade.graded_at) / NS_PER_MS) + (c.max_grade_age_sec - regradeMarginSec) * 1000 <= Date.now();
+      try {
+        if (pool.ids.length) { shopper = pool.ids.shift(); shopperFunding = "testnet faucet"; writeJson(poolFile, pool); }
+        else if (staleSoon) ({ id: shopper, funding: shopperFunding } = await graderShopper(grader));
+        else throw new Error("no faucet-funded shopper in the pool yet; not funding a traceable one");
+      } catch (e) {
+        // Quietly: a public "not graded" line would announce that a visit was due.
+        attempts.set(id, { fails: (attempts.get(id)?.fails || 0) + 1, nextAt: Date.now() + 10 * 60_000, why: "shopper not funded" });
+        log(`[keeper] (private) mystery shopper for listing ${id} not funded: ${e.message.slice(0, 120)}`);
+        return;
+      }
     }
-    grading = { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines: [], mystery: !!shopper };
-    emit("grading", shopper ? `mystery-shopper re-grade of listing ${id} (${l.model}) from a fresh ${shopperFunding === "testnet faucet" ? "faucet-funded" : "grader-funded"} account` : `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
+    // A shopper visit stays out of the public feed and status until it is over:
+    // announcing it would tell the seller which order to treat well.
+    if (shopper) log(`[keeper] (private) mystery-shopper visit to listing ${id} from ${shopperFunding} account ${shopper}`);
+    else emit("grading", `grading listing ${id} (${l.model}, seller ${l.seller})`, { listing: id });
+    const lines = [];
+    grading = shopper ? null : { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines };
     try {
       const r = await Promise.race([
-        gradeListing(id, { grader, shopper, shopperFunding, log: (line) => { grading.lines.push(String(line).trim()); if (grading.lines.length > 40) grading.lines.shift(); } }),
-        sleep(gradeTimeoutMs).then(() => { throw new Error("grading timed out"); }),
+        gradeListing(id, { grader, shopper, shopperFunding, log: (line) => { lines.push(String(line).trim()); if (lines.length > 40) lines.shift(); } }),
+        sleep(shopper ? shopTimeoutMs : gradeTimeoutMs).then(() => { throw new Error("grading timed out"); }),
       ]);
       day.grades++;
       attempts.delete(id);
@@ -271,8 +307,8 @@ export function createKeeper({
       const idx = wanted.indexOf(id);
       if (idx >= 0) wanted.splice(idx, 1);
       const d = r.report.decision;
-      if (shopper) shops.push({ shopper, funding: shopperFunding, orderId: String(r.orderId), listingId: id, report: r.file, until: Date.now() + 5 * 60_000, disputed: new Set() });
-      emit("graded", `listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
+      if (shopper) shops.push({ shopper, funding: shopperFunding, orderId: String(r.orderId), listingId: id, report: r.file, closeAt: r.closeAt, until: Math.max(Date.now(), r.closeAt || 0) + 5 * 60_000, disputed: new Set() });
+      emit("graded", `${shopper ? "mystery-shopper re-grade: " : ""}listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
     } catch (e) {
       backoff(id, e.message.slice(0, 160));
     } finally {
@@ -312,7 +348,6 @@ export function createKeeper({
         queue: [...wanted],
         backoff: Object.fromEntries([...attempts].map(([k, v]) => [k, { fails: v.fails, next_at: v.nextAt, why: v.why }])),
         grades_today: day.grades,
-        mystery_shops: shops.map((s) => ({ listing: s.listingId, order: s.orderId })),
         events: events.slice(-80),
         last_settle_at: stats.lastSettleAt,
         last_error: stats.lastError,
