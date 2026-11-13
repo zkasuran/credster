@@ -65,7 +65,10 @@ export function createKeeper({
   const attempts = new Map(); // listing id -> { fails, nextAt, why }
   const busy = new Set(); // "claim:1", "order:2", "offer:3": one action in flight per item
   const wanted = []; // listing ids to grade before anything else
-  const shops = []; // { shopper, orderId, listingId, until, disputed: Set }
+  // Mystery-shopper orders being audited. Kept on disk so a restart does not drop an audit.
+  const shopsFile = path("shops.json");
+  const shops = (readJson(shopsFile, []) || []).filter((s) => s.shopper).map((s) => ({ ...s, disputed: new Set(s.disputed || []) }));
+  const saveShops = () => writeJson(shopsFile, shops.map((s) => ({ ...s, disputed: [...s.disputed] })));
   // Faucet-funded shopper accounts made ahead of time: the public faucet allows about
   // one an hour per address, and each account is used for one visit only.
   const poolFile = path("shopper-pool.json");
@@ -189,14 +192,19 @@ export function createKeeper({
     // Mystery-shopper bills: the seller claims within seconds; the shopper audits
     // each claim against its own receipts before the challenge window closes.
     for (const s of [...shops]) {
+     // One bad entry must never stop payments and refunds for the whole market.
+     try {
       if (s.closeAt && Date.now() >= s.closeAt) {
         s.closeAt = 0;
+        saveShops();
         await new Buyer(s.shopper).close(s.orderId).then(() => log(`[keeper] (private) shopper closed order ${s.orderId} on listing ${s.listingId}`)).catch((e) => log(`[keeper] shopper close: ${e.message.slice(0, 120)}`));
       }
       if (Date.now() > s.until) {
         const o = await view("get_order", { order_id: s.orderId }).catch(() => null);
+        if (o?.status === "Open") await new Buyer(s.shopper).close(s.orderId).catch(() => {}); // a visit that never finished
         if (o?.status === "Closed" || Date.now() > s.until + 30 * 60_000) {
           shops.splice(shops.indexOf(s), 1);
+          saveShops();
           // Grader-funded shoppers are swept back. Faucet-funded ones are left alone:
           // deleting them into the grader would link them to it after the fact.
           if (s.funding === "grader") await deleteAccount(s.shopper, grader).then(() => forgetKey(s.shopper)).catch((e) => log(`[keeper] sweep shopper: ${e.message.slice(0, 120)}`));
@@ -207,19 +215,22 @@ export function createKeeper({
         const a = await auditShop({ shopper: s.shopper, orderId: s.orderId, log: () => {} });
         for (const d of a.disputed) {
           s.disputed.add(String(d.claim));
+          saveShops();
           emit("dispute", `mystery shopper disputed claim ${d.claim} on listing ${s.listingId}: ${d.reason}`, { claim: String(d.claim), listing: s.listingId, tx: d.tx });
         }
         // Once a shopper's dispute is rejected, the listing is suspended with a report.
         for (const cid of s.disputed) {
           const cl = await view("get_claim", { claim_id: cid });
-          if (cl?.status !== "Rejected" || s.suspended) continue;
+          if (cl?.status !== "Rejected" || s.suspended || !s.report) continue;
           const r = await postAuditGrade({ grader, listingId: s.listingId, claim: cl, base: s.report });
           s.suspended = true;
+          saveShops();
           if (r.skipped) continue; // the shopper's grade had already suspended it
           listingsCache.at = 0;
           emit("graded", `listing ${s.listingId} graded F and suspended: ${r.reason}`, { listing: s.listingId, tier: "F", tx: r.tx, report: r.file, hash: r.hash });
         }
       });
+     } catch (e) { log(`[keeper] shop ${s.orderId}: ${e.message.slice(0, 160)}`); }
     }
     await once("pool", fillPool);
     stats.settleTicks++;
@@ -281,7 +292,7 @@ export function createKeeper({
       const staleSoon = Number(BigInt(l.grade.graded_at) / NS_PER_MS) + (c.max_grade_age_sec - regradeMarginSec) * 1000 <= Date.now();
       try {
         if (pool.ids.length) { shopper = pool.ids.shift(); shopperFunding = "testnet faucet"; writeJson(poolFile, pool); }
-        else if (staleSoon) ({ id: shopper, funding: shopperFunding } = await graderShopper(grader));
+        else if (staleSoon || process.env.TS_SHOPPER_ALLOW_GRADER === "1") ({ id: shopper, funding: shopperFunding } = await graderShopper(grader));
         else throw new Error("no faucet-funded shopper in the pool yet; not funding a traceable one");
       } catch (e) {
         // Quietly: a public "not graded" line would announce that a visit was due.
@@ -298,7 +309,12 @@ export function createKeeper({
     grading = shopper ? null : { listing: id, model: l.model, seller: l.seller, started: Date.now(), lines };
     try {
       const r = await Promise.race([
-        gradeListing(id, { grader, shopper, shopperFunding, log: (line) => { lines.push(String(line).trim()); if (lines.length > 40) lines.shift(); } }),
+        gradeListing(id, { grader, shopper, shopperFunding, onOrder: (orderId) => {
+          // Audit from the first claim on, while the visit is still going.
+          if (!shopper) return;
+          shops.push({ shopper, funding: shopperFunding, orderId, listingId: id, report: null, closeAt: 0, until: Date.now() + 60 * 60_000, disputed: new Set() });
+          saveShops();
+        }, log: (line) => { lines.push(String(line).trim()); if (lines.length > 40) lines.shift(); } }),
         sleep(shopper ? shopTimeoutMs : gradeTimeoutMs).then(() => { throw new Error("grading timed out"); }),
       ]);
       day.grades++;
@@ -307,7 +323,8 @@ export function createKeeper({
       const idx = wanted.indexOf(id);
       if (idx >= 0) wanted.splice(idx, 1);
       const d = r.report.decision;
-      if (shopper) shops.push({ shopper, funding: shopperFunding, orderId: String(r.orderId), listingId: id, report: r.file, closeAt: r.closeAt, until: Math.max(Date.now(), r.closeAt || 0) + 5 * 60_000, disputed: new Set() });
+      const sh = shopper && shops.find((x) => x.orderId === String(r.orderId));
+      if (sh) { sh.report = r.file; sh.closeAt = r.closeAt; sh.until = Math.max(Date.now(), r.closeAt || 0) + 5 * 60_000; saveShops(); }
       emit("graded", `${shopper ? "mystery-shopper re-grade: " : ""}listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
     } catch (e) {
       backoff(id, e.message.slice(0, 160));

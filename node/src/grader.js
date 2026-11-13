@@ -255,7 +255,7 @@ export async function graderShopper(grader, amount = near("0.12")) {
   return { id, tx: r.txHash, funding: "grader" };
 }
 
-export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), shopper = null, shopperFunding = null, log = console.log } = {}) {
+export async function gradeListing(listingId, { grader, post = true, trialDeposit = near("0.05"), shopper = null, shopperFunding = null, onOrder = () => {}, log = console.log } = {}) {
   const refs = loadRefs();
   const listing = await view("get_listing", { listing_id: String(listingId) });
   if (!listing) throw new Error(`no listing ${listingId}`);
@@ -271,6 +271,8 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     ? await buyer.openTab(listingId, up(listing.ask_in), up(listing.ask_out), deposit)
     : await buyer.buySpot(listingId, deposit);
   log(`  ${shopper ? `mystery-shopper ${plan.kind}` : "trial"} order ${orderId} (${fmtNear(deposit)} NEAR) tx ${orderTx}`);
+  // The caller starts auditing the bill now: a paced visit outlasts each claim's challenge window.
+  onOrder(String(orderId));
 
   const calls = [];
   const run = async (kind, body) => {
