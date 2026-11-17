@@ -203,6 +203,9 @@ sequenceDiagram
 
 - **Libraries:** near-sdk, near-api-js, @noble/curves, @noble/hashes, @phala/dcap-qvl and Playwright (screenshots only). The site vendors GSAP 3.15 with ScrollTrigger and SplitText (GSAP standard no-charge license), Lenis 1.3 (MIT), @noble/ed25519 and @noble/curves with @noble/hashes for in-browser signing (MIT) and the fonts Instrument Serif, Inter Tight and JetBrains Mono (SIL OFL) in `web/site/`.
 - **AI assistance:** the code and docs were written with an AI coding agent, directed and reviewed by the author.
+- **Submission snapshot and later changes:** the hackathon submission was sent on 2026-11-13 and the code at that moment is the tag `hackathon-submission` (commit `26d9682`). Development ended on 2026-11-14 at 23:59 UTC. Two changes were made to the live server after that date, on 2026-11-17, to keep the hosted demo usable during judging. They are not part of the code submitted for the build window. See `git diff hackathon-submission..master`.
+  - Pull request 3: an honest seller was graded F because one probe call timed out. The grader now retries a call that got no answer and posts no grade when a probe is still unanswered. A seller whose F rested only on failed calls can ask for a new grade.
+  - Visitors can launch an honest GLM or DeepSeek seller from the live page. Before, the only honest seller they could launch used Qwen.
 - **Generated media:** the landing page's photographs were made with Gemini 3 Pro Image and GPT Image 2.5 and its video loops with Kling 3.0 image-to-video, all through GMI Cloud. They are illustrations. Every number on the page comes from the testnet runs or from live RPC.
 
 License: MIT.
