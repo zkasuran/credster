@@ -12,7 +12,8 @@ These are the rules the contract (`contract/src/lib.rs`) enforces. Amounts are n
 
 - Only the `grader` account posts grades: tier A, B, C or F, a score, the checks that passed, latency, error rate and the sha256 of the full report.
 - A passing tier (A, B, C) requires `fingerprint_ok` and `metering_ok`. Tier A also requires `attested`. The contract refuses a grade that breaks these rules.
-- F suspends the listing. A later passing grade lifts the suspension.
+- F suspends the listing. A suspended listing takes no orders, trial orders included, so the grader cannot re-grade it on its own. The seller asks for a new grade with `update_endpoint`, which clears the grade and makes the listing ungraded; it can sell again only after a passing grade.
+- The grader posts no grade when a fingerprint probe gets no answer after two retries (network error, timeout or 5xx) and no more than half the calls failed. It tries again later. A failed call is not evidence about the model or the bill. Every attempt still counts in the report's error rate.
 - A listing can be bought only when it is Active, its grade is not F, the grade is younger than `max_grade_age_sec` and capacity is left.
 - An ungraded or stale listing accepts only spot orders up to `trial_cap`. The grader probes through these trial orders like any buyer.
 

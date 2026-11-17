@@ -1,0 +1,228 @@
+{
+  "credster_report": 1,
+  "graded_at": "2026-11-14T21:36:52.957Z",
+  "grader": "grader.credster-live-mwdmcl3xeo2.testnet",
+  "contract": "market.credster-live-mwdmcl3xeo2.testnet",
+  "listing": {
+    "id": "0",
+    "seller": "s-honest.credster-live-mwdmcl3xeo2.testnet",
+    "model": "Qwen/Qwen3.8-27B",
+    "endpoint": "https://credster.store/s/honest/v1",
+    "node_key": "ed25519:5h1dEVNjjN8k82suvZdkPaC3t5DQuuU5JjEKZZEJRZtb",
+    "ask_in": "80000000000000000000000",
+    "ask_out": "300000000000000000000000"
+  },
+  "trial_order": {
+    "id": "85",
+    "tx": "H5UTBVys4jz8uqSx9AZPaU3C6YeRH44y9B1qB7G3GDT3",
+    "buyer": "otter-amber-34538.testnet",
+    "mystery_shopper": true,
+    "funded_by": "testnet faucet"
+  },
+  "fingerprint": {
+    "observed": [
+      null,
+      24,
+      83
+    ],
+    "reference": [
+      68,
+      24,
+      83
+    ],
+    "verdict": "missing_usage",
+    "looks_like": [],
+    "reference_source": "measured at https://cloud-api.near.ai during this grade (2026-11-14T21:36:52.956Z)",
+    "probes": {
+      "natural": true,
+      "seed": 1875472072,
+      "texts": [
+        "I'm planning a weekend in Oaxaca. What should I not miss?",
+        "Suggest three names for a podcast about maps in Kyoto.",
+        "Summarise in one sentence: I left my umbrella at the museum next to the ticket desk. Please water the basil every morning while I'm away."
+      ]
+    }
+  },
+  "probes_sha256": "a13128013448fd0d2fa77654b10065336cf128f928abac3494ab06a4ac33702b",
+  "visit": {
+    "style": "natural",
+    "kind": "spot",
+    "deposit": "0.08",
+    "gaps_sec": [
+      0,
+      31,
+      69,
+      45,
+      26,
+      21,
+      22
+    ],
+    "close_after_min": 33
+  },
+  "capability": {
+    "seed": 1875472072,
+    "pct": 100,
+    "tasks": [
+      {
+        "id": "multiply",
+        "prompt": "Quick check: 94 seats times 80 rows, how many seats is that?",
+        "answer": "ts together:\n    *   $7200 + 320 = 7520$\n\n**Answer:**\nThere are **7,520** seats.",
+        "correct": true
+      },
+      {
+        "id": "reverse",
+        "prompt": "For a puzzle I need \"ueiqmomgk\" spelled backwards. What is it?",
+        "answer": "  m\n6.  q\n7.  i\n8.  e\n9.  u\n\nPutting them together, the result is: **kgmomqieu**",
+        "correct": true
+      },
+      {
+        "id": "sort",
+        "prompt": "Can you put these scores in order from lowest to highest: 71, 89, 86, 58, 39, 50?",
+        "answer": "r is **89**.\n\n**Final Ordered List (Lowest to Highest):**\n39, 50, 58, 71, 86, 89",
+        "correct": true
+      },
+      {
+        "id": "count",
+        "prompt": "Count the \"h\" characters in hwgsoshveeamnauikw, please.",
+        "answer": ". n\n14. a\n15. u\n16. i\n17. k\n18. w\n\nThere are **2** \"h\" characters in the string.",
+        "correct": true
+      }
+    ]
+  },
+  "attestation": {
+    "verdict": "unavailable",
+    "attested": false,
+    "tee_capable": false,
+    "reason": "first probe failed",
+    "steps": []
+  },
+  "calls": {
+    "total": 7,
+    "ok": 6,
+    "error_pct": 14,
+    "p50_latency_ms": 10554,
+    "receipts_ok": true,
+    "detail": [
+      {
+        "kind": "fingerprint",
+        "ok": false,
+        "status": 500,
+        "ms": 120154
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 26740,
+        "usage": {
+          "prompt_tokens": 24,
+          "total_tokens": 226,
+          "completion_tokens": 202,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 0,
+          "completion_tokens_details": null
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 8278,
+        "usage": {
+          "prompt_tokens": 83,
+          "total_tokens": 225,
+          "completion_tokens": 142,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 116,
+          "completion_tokens_details": {
+            "reasoning_tokens": 116
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 10554,
+        "usage": {
+          "prompt_tokens": 31,
+          "total_tokens": 183,
+          "completion_tokens": 152,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 0,
+          "completion_tokens_details": null
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 18223,
+        "usage": {
+          "prompt_tokens": 48,
+          "total_tokens": 307,
+          "completion_tokens": 259,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 0,
+          "completion_tokens_details": null
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 8364,
+        "usage": {
+          "prompt_tokens": 31,
+          "total_tokens": 120,
+          "completion_tokens": 89,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 0,
+          "completion_tokens_details": null
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 12500,
+        "usage": {
+          "prompt_tokens": 31,
+          "total_tokens": 183,
+          "completion_tokens": 152,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "reasoning_tokens": 0,
+          "completion_tokens_details": null
+        },
+        "receiptOk": true
+      }
+    ]
+  },
+  "decision": {
+    "tier": "F",
+    "score": 20,
+    "fingerprintOk": false,
+    "meteringOk": false,
+    "attested": false,
+    "reasons": [
+      "answers carry no usage numbers"
+    ]
+  }
+}

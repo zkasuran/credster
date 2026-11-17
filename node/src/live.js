@@ -8,8 +8,8 @@
 //
 // Configuration is environment variables; see JUDGING.md and `credster live --help`.
 import http from "node:http";
-import { createReadStream, existsSync, statSync, rmSync } from "node:fs";
-import { join, extname, resolve, sep, dirname } from "node:path";
+import { createReadStream, existsSync, statSync, rmSync, readFileSync } from "node:fs";
+import { join, extname, resolve, sep, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes, createHash } from "node:crypto";
 import {
@@ -20,7 +20,7 @@ import { createSellerNode, createListing, moveListing } from "./seller-node.js";
 import { createKeeper } from "./keeper.js";
 import { PERSONAS, LAUNCHABLE } from "./personas.js";
 import { path, readJson, writeJson, HOME } from "./store.js";
-import { REPORTS } from "./grader.js";
+import { REPORTS, fRestsOnOutage } from "./grader.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const env = process.env;
@@ -127,6 +127,14 @@ export async function startLive() {
     sellers.delete(String(n.listingId));
   }
 
+  // A listing's current grade report, from this server's report directory.
+  const reportOf = (l) => {
+    const file = basename(String(l.grade?.report_url || ""));
+    if (!/^listing-\d+-\d+(-audit)?\.json$/.test(file)) return null;
+    try { return JSON.parse(readFileSync(join(REPORTS, file), "utf8")); } catch { return null; }
+  };
+  const regrade = [];
+
   // Bring every hosted listing to this server's public URL. Moving a listing
   // clears its grade on chain, so the keeper grades it again.
   for (const name of Object.keys(state.hosted)) {
@@ -137,6 +145,13 @@ export async function startLive() {
     if (l.endpoint !== endpointOf(name) || l.node_key !== conf.node_key) {
       const r = await moveListing(name, endpointOf(name));
       log(`hosted ${name}: listing ${l.id} moved to ${endpointOf(name)} tx ${r.txHash}`);
+    } else if (l.status === "Suspended" && fRestsOnOutage(reportOf(l))) {
+      // The F came from probes that got no answer, not from evidence. As its seller,
+      // ask for a fresh grade the way any seller can: re-register the same endpoint,
+      // which clears the grade on chain. The listing still can't sell until it passes.
+      const r = await moveListing(name, endpointOf(name));
+      log(`hosted ${name}: listing ${l.id} was graded F only because probes got no answer; re-registered for a new grade tx ${r.txHash}`);
+      regrade.push({ id: String(l.id), tx: r.txHash });
     }
     mount(name);
   }
@@ -146,6 +161,10 @@ export async function startLive() {
     grader: GRADER, signer: env.TS_KEEPER_SIGNER || GRADER, log,
     sellerFor: (l) => sellers.get(String(l.id)) || null,
   }).start();
+  for (const { id, tx } of regrade) {
+    keeper.emit("grading", `listing ${id} asked for a new grade: its F rested on probe calls that got no answer, not on its model or its bill`, { listing: id, tx });
+    keeper.gradeSoon(id);
+  }
 
   // ---------------------------------------------------------------- launches
   const launchesByIp = limiter(L.launchPerIpHour, 3600_000);
@@ -289,7 +308,7 @@ export async function startLive() {
   }
 
   function report(req, res, name) {
-    if (!/^listing-\d+-\d+\.json$/.test(name)) return json(res, 404, { error: "no such report" });
+    if (!/^listing-\d+-\d+(-audit)?\.json$/.test(name)) return json(res, 404, { error: "no such report" });
     for (const dir of [REPORTS, join(WEB, "reports")]) {
       const f = join(dir, name);
       if (existsSync(f)) {

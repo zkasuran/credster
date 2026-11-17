@@ -1,0 +1,243 @@
+{
+  "credster_report": 1,
+  "graded_at": "2026-11-12T14:10:26.900Z",
+  "grader": "grader.credster-live-mwdmcl3xeo2.testnet",
+  "contract": "market.credster-live-mwdmcl3xeo2.testnet",
+  "listing": {
+    "id": "1",
+    "seller": "s-swap.credster-live-mwdmcl3xeo2.testnet",
+    "model": "Qwen/Qwen3.8-27B",
+    "endpoint": "https://credster.store/s/swap/v1",
+    "node_key": "ed25519:8cXMaYMt6pQvAPvabUjBHqxUB2hHXV2apVWPUGTNiqLw",
+    "ask_in": "50000000000000000000000",
+    "ask_out": "200000000000000000000000"
+  },
+  "trial_order": {
+    "id": "4",
+    "tx": "6R2pesKb4yWqZrVboBzzJ8cVzpHHpMW3SwpHHywBfSVg"
+  },
+  "fingerprint": {
+    "observed": [
+      75,
+      61,
+      68
+    ],
+    "reference": [
+      117,
+      103,
+      110
+    ],
+    "verdict": "mismatch",
+    "factor": 0.617,
+    "looks_like": [
+      "Qwen/Qwen3.6-35B-A3B-FP8"
+    ]
+  },
+  "probes_sha256": "fe3a60d5adb203aad2cce2f51eca3bd949e26556a5e44fec95173ef593012388",
+  "capability": {
+    "seed": 762841984,
+    "pct": 100,
+    "tasks": [
+      {
+        "id": "multiply",
+        "prompt": "Compute 766 * 827. Reply with only the number.",
+        "answer": "633482",
+        "correct": true
+      },
+      {
+        "id": "reverse",
+        "prompt": "Reverse the string \"sdezwrfcbcs\" character by character. Reply with only the reversed string.",
+        "answer": "scbcfrwzeds",
+        "correct": true
+      },
+      {
+        "id": "sort",
+        "prompt": "Sort these numbers in ascending order: 76, 95, 49, 84, 63, 73, 79. Reply with only the numbers separated by commas.",
+        "answer": "49, 63, 73, 76, 79, 84, 95",
+        "correct": true
+      },
+      {
+        "id": "count",
+        "prompt": "How many times does the letter \"f\" appear in \"myvrfaksbhuxozxkinvaqbxk\"? Reply with only the number.",
+        "answer": "1",
+        "correct": true
+      }
+    ]
+  },
+  "attestation": {
+    "verdict": "contradicts",
+    "attested": false,
+    "tee_capable": true,
+    "steps": [
+      {
+        "check": "signature recovers to the stated signing address",
+        "fail": "signature does not recover to the stated signing address",
+        "ok": true,
+        "recovered": "0xfdbd7952498b333206f360d71d97a1e0961e8ddf"
+      },
+      {
+        "check": "signed text names the claimed model and our exact bytes",
+        "fail": "the signature does not name the claimed model and our bytes",
+        "ok": false,
+        "got": "Qwen/Qwen3.6-35B-A3B-FP8:3d228b1f535db2d9cac1b802db12d5be71d59f90031050a01cbceb7c6fb1fc2b:ffcdb9726ffe5938e14e19e5c3b1b76acd57570952e798497c11d42e6fb12146"
+      },
+      {
+        "check": "provider attestation report lists the signer for the claimed model",
+        "fail": "the claimed model's attestation report does not list this signer",
+        "ok": false,
+        "listed": [
+          "0x835ab53d20294ef795906dff21ae4c045336aa26"
+        ]
+      },
+      {
+        "check": "attestation report for Qwen/Qwen3.6-35B-A3B-FP8 lists the signer",
+        "ok": true,
+        "listed": [
+          "0xfdbd7952498b333206f360d71d97a1e0961e8ddf"
+        ]
+      }
+    ],
+    "signed_model": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "served_model": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "reason": "a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B"
+  },
+  "calls": {
+    "total": 7,
+    "ok": 7,
+    "error_pct": 0,
+    "p50_latency_ms": 1305,
+    "receipts_ok": true,
+    "detail": [
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 481,
+        "usage": {
+          "prompt_tokens": 75,
+          "total_tokens": 91,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 230,
+        "usage": {
+          "prompt_tokens": 61,
+          "total_tokens": 77,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "fingerprint",
+        "ok": true,
+        "status": 200,
+        "ms": 243,
+        "usage": {
+          "prompt_tokens": 68,
+          "total_tokens": 84,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 17,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1909,
+        "usage": {
+          "prompt_tokens": 27,
+          "total_tokens": 612,
+          "completion_tokens": 585,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 577,
+          "completion_tokens_details": {
+            "reasoning_tokens": 577
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1305,
+        "usage": {
+          "prompt_tokens": 32,
+          "total_tokens": 474,
+          "completion_tokens": 442,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 434,
+          "completion_tokens_details": {
+            "reasoning_tokens": 434
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 2360,
+        "usage": {
+          "prompt_tokens": 54,
+          "total_tokens": 876,
+          "completion_tokens": 822,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 794,
+          "completion_tokens_details": {
+            "reasoning_tokens": 794
+          }
+        },
+        "receiptOk": true
+      },
+      {
+        "kind": "capability",
+        "ok": true,
+        "status": 200,
+        "ms": 1645,
+        "usage": {
+          "prompt_tokens": 42,
+          "total_tokens": 705,
+          "completion_tokens": 663,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 660,
+          "completion_tokens_details": {
+            "reasoning_tokens": 660
+          }
+        },
+        "receiptOk": true
+      }
+    ]
+  },
+  "decision": {
+    "tier": "F",
+    "score": 20,
+    "fingerprintOk": false,
+    "meteringOk": false,
+    "attested": false,
+    "reasons": [
+      "token counts do not match the claimed model; they match Qwen/Qwen3.6-35B-A3B-FP8",
+      "a TEE signature shows Qwen/Qwen3.6-35B-A3B-FP8 answered, not Qwen/Qwen3.8-27B"
+    ]
+  }
+}
