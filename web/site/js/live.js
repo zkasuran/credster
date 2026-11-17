@@ -17,7 +17,7 @@ const NB = "https://testnet.nearblocks.io";
 const TIER = { A: "TEE-signed", B: "no TEE for this model", C: "capped", F: "suspended" };
 const PLAN = { A: 0.9, B: 0.8, C: 0.6 };
 const NS = 1_000_000n;
-const HONEST = new Set(["honest", "deepseek"]);
+const HONEST = new Set(["honest", "glm", "deepseek"]);
 // Per-model request options that keep a reasoning model's thinking short, so a chat
 // answer fits the node's token cap. Measured on NEAR AI Cloud, 12 Nov 2026: with 512
 // tokens and no option, glm-5.3-flash spent all 512 thinking and returned nothing.

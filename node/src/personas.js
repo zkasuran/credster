@@ -4,7 +4,11 @@
 export const PERSONAS = {
   honest: {
     model: "Qwen/Qwen3.8-27B", mode: "honest", ask: ["0.08", "0.30"],
-    title: "Honest", blurb: "Serves the model it claims and bills what it serves.", expect: "A, or C if the upstream gives no TEE signature",
+    title: "Honest Qwen", blurb: "Serves Qwen3.8-27B as claimed and bills what it serves.", expect: "A when the upstream signs its answers (C when it does not)",
+  },
+  glm: {
+    model: "z-ai/glm-5.3-flash", mode: "honest", ask: ["0.03", "0.12"],
+    title: "Honest GLM", blurb: "Serves GLM-5.3-Flash as claimed and bills what it serves.", expect: "A when the upstream signs its answers (C when it does not)",
   },
   swap: {
     model: "Qwen/Qwen3.8-27B", mode: "swap", swapModel: "Qwen/Qwen3.6-35B-A3B-FP8", ask: ["0.05", "0.20"],
@@ -28,9 +32,9 @@ export const PERSONAS = {
   },
   deepseek: {
     model: "deepseek/deepseek-v4.1-flash", mode: "honest", ask: ["0.03", "0.12"],
-    title: "Honest, no TEE", blurb: "An honest seller of a model without TEE signatures.", expect: "B",
+    title: "Honest DeepSeek", blurb: "Serves DeepSeek V4.1 Flash as claimed. That model has no TEE signatures, so the best grade is B.", expect: "B",
   },
 };
 
 /** Personas a visitor may launch on the live server. */
-export const LAUNCHABLE = ["honest", "swap", "sibling", "inflate", "switch", "overclaim"];
+export const LAUNCHABLE = ["honest", "glm", "deepseek", "swap", "sibling", "inflate", "switch", "overclaim"];
