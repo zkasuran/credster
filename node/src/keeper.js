@@ -327,7 +327,12 @@ export function createKeeper({
       if (sh) { sh.report = r.file; sh.closeAt = r.closeAt; sh.until = Math.max(Date.now(), r.closeAt || 0) + 5 * 60_000; saveShops(); }
       emit("graded", `${shopper ? "mystery-shopper re-grade: " : ""}listing ${id} graded ${d.tier}${d.tier === "F" ? " and suspended" : ""}${d.reasons.length ? ": " + d.reasons.join("; ") : ""}`, { listing: id, tier: d.tier, tx: r.tx, report: r.file, hash: r.hash });
     } catch (e) {
-      backoff(id, e.message.slice(0, 160));
+      if (shopper) {
+        // Quietly, like an unfunded shopper: a public line would say a visit just happened.
+        // The next visit comes soon, from another account.
+        attempts.set(id, { fails: (attempts.get(id)?.fails || 0) + 1, nextAt: Date.now() + 20 * 60_000, why: "shopper visit inconclusive" });
+        log(`[keeper] (private) mystery-shopper visit to listing ${id} posted nothing: ${e.message.slice(0, 160)}`);
+      } else backoff(id, e.message.slice(0, 160));
     } finally {
       grading = null;
     }

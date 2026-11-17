@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { compareFingerprint, identify, decideTier } from "../src/grader.js";
+import { compareFingerprint, identify, decideTier, fRestsOnOutage } from "../src/grader.js";
 import { capabilityTasks } from "../src/probes.js";
 import { cost, orderPrices } from "../src/pricing.js";
 import { signReceipt, verifyReceipt, receiptsHash, signRequest, requestMessage, verifyEd25519, recoverEip191 } from "../src/sign.js";
@@ -75,6 +75,27 @@ test("tiers: scaled usage is F with metering_ok false", () => {
 test("tiers: low capability or errors lower the tier", () => {
   assert.equal(decideTier({ fingerprint: match, attestation: att("unavailable", false), capabilityPct: 25, errorPct: 0 }).tier, "C");
   assert.equal(decideTier({ fingerprint: match, attestation: att("verified"), capabilityPct: 100, errorPct: 60 }).tier, "F");
+});
+
+test("tiers: a probe that got no answer posts no grade unless most calls failed", () => {
+  const incomplete = { verdict: "incomplete", failed: [0] };
+  const d = decideTier({ fingerprint: incomplete, attestation: att("unavailable", true), capabilityPct: 100, errorPct: 14 });
+  assert.equal(d.inconclusive, true);
+  assert.equal(d.tier, null);
+  assert.equal(decideTier({ fingerprint: incomplete, attestation: att("unavailable", true), capabilityPct: 0, errorPct: 60 }).tier, "F");
+});
+
+test("an F that rests only on failed probe calls is recognised; evidence of cheating is not", () => {
+  const outage = JSON.parse(readFileSync(new URL("./fixtures/report-f-outage.json", import.meta.url)));
+  const swap = JSON.parse(readFileSync(new URL("./fixtures/report-f-swap.json", import.meta.url)));
+  assert.equal(fRestsOnOutage(outage), true);
+  assert.equal(fRestsOnOutage(swap), false);
+  assert.equal(fRestsOnOutage({ ...outage, claims_audit: { claim: "1" } }), false);
+  assert.equal(fRestsOnOutage({ ...outage, decision: { ...outage.decision, tier: "B" } }), false);
+  // An answer that arrived without usage numbers is the seller's doing, not an outage.
+  const noUsage = structuredClone(outage);
+  noUsage.calls.detail.find((c) => c.kind === "fingerprint" && c.ok).usage = {};
+  assert.equal(fRestsOnOutage(noUsage), false);
 });
 
 test("capability tasks are fresh per seed and checkable", () => {

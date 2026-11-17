@@ -191,6 +191,11 @@ export function decideTier({ fingerprint, attestation, capabilityPct, errorPct }
   if (fingerprint.verdict === "missing_usage") reasons.push("answers carry no usage numbers");
   if (attestation.verdict === "contradicts") reasons.push(attestation.reason);
   if (errorPct > 50) reasons.push(`${errorPct}% of probe calls failed`);
+  // A probe that got no answer says nothing about the model or the bill. Unless most
+  // calls failed (an F above), there is no grade to post: the keeper tries again later.
+  if (fingerprint.verdict === "incomplete" && errorPct <= 50) {
+    return { tier: null, inconclusive: true, score: 0, fingerprintOk: false, meteringOk: false, attested: false, reasons: [`fingerprint probe ${fingerprint.failed.map((i) => i + 1).join(", ")} got no answer after retries`] };
+  }
   let tier;
   if (!fingerprintOk || attestation.verdict === "contradicts" || errorPct > 50) tier = "F";
   else if (attested && capabilityPct >= 50 && errorPct <= 10) tier = "A";
@@ -275,15 +280,24 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
   onOrder(String(orderId));
 
   const calls = [];
+  // A request that got no answer (network error, timeout, 5xx from the node or its
+  // upstream) is sent again, up to RETRIES more times, as any buyer would. Every
+  // attempt stays in the call log and counts toward the error rate.
+  const RETRIES = 2;
   const run = async (kind, body) => {
-    try {
-      // A mystery shopper checks every answer's TEE signature, as a careful buyer would.
-      const r = await buyer.chat(orderId, body, { endpoint: listing.endpoint, nodeKey: listing.node_key, tee: !!shopper });
-      calls.push({ kind, ok: r.ok, status: r.status, ms: r.ms, usage: r.json?.usage, receiptOk: r.receiptOk });
-      return r;
-    } catch (e) {
-      calls.push({ kind, ok: false, error: e.message });
-      return { ok: false, error: e.message };
+    for (let attempt = 0; ; attempt++) {
+      let r;
+      try {
+        // A mystery shopper checks every answer's TEE signature, as a careful buyer would.
+        r = await buyer.chat(orderId, body, { endpoint: listing.endpoint, nodeKey: listing.node_key, tee: !!shopper });
+        calls.push({ kind, ok: r.ok, status: r.status, ms: r.ms, usage: r.json?.usage, receiptOk: r.receiptOk, ...(attempt ? { retry: attempt } : {}) });
+      } catch (e) {
+        calls.push({ kind, ok: false, error: e.message, ...(attempt ? { retry: attempt } : {}) });
+        r = { ok: false, error: e.message };
+      }
+      const transient = !r.ok && !(r.status >= 400 && r.status < 500);
+      if (!transient || attempt >= RETRIES) return r;
+      await new Promise((res) => setTimeout(res, 3000 * (attempt + 1)));
     }
   };
 
@@ -314,8 +328,10 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
     if (lr) refs.models[m] = { ...refs.models[m], counts: lr.counts, stable: true };
   }
   if (live) refs.models[listing.model] = { ...refs.models[listing.model], counts: live.counts, stable: true };
+  // A failed probe has no usage to compare; that is not the same as an answer without usage numbers.
+  const failed = fpBodies.map((_, i) => i).filter((i) => !fp[i]?.ok);
   const fingerprint = {
-    observed, reference, ...compareFingerprint(observed, reference), looks_like: identify(observed, refs),
+    observed, reference, ...(failed.length ? { verdict: "incomplete", failed } : compareFingerprint(observed, reference)), looks_like: identify(observed, refs),
     reference_source: live ? `measured at ${PROVIDER} during this grade (${live.measured_at})` : "fingerprints.json",
     probes: fixed ? "fixed" : plan ? { natural: true, seed: plan.seed, texts: fpBodies.map((b) => b.messages[0].content) } : { seed: probeSeed, texts: probes },
     ...(live && stored && JSON.stringify(stored) !== JSON.stringify(live.counts) ? { stored_reference: stored } : {}),
@@ -341,6 +357,11 @@ export async function gradeListing(listingId, { grader, post = true, trialDeposi
   const latency = p50(okCalls.map((c) => c.ms));
   const receiptsOk = okCalls.every((c) => c.receiptOk);
   const decision = decideTier({ fingerprint, attestation, capabilityPct, errorPct });
+  if (decision.inconclusive) {
+    log(`  inconclusive: ${decision.reasons.join("; ")}; nothing posted`);
+    await buyer.close(orderId).catch((e) => log(`  close order: ${e.message.slice(0, 120)}`));
+    throw Object.assign(new Error(`grade inconclusive: ${decision.reasons.join("; ")}`), { inconclusive: true });
+  }
   if (!receiptsOk) {
     decision.reasons.push("some answers had no valid node-signed receipt");
     if (decision.tier !== "F") decision.tier = "C";
@@ -460,6 +481,24 @@ export async function auditShop({ shopper, orderId, log = console.log }) {
     out.push({ claim: x.claim.id, reason: x.reason, tx: r.txHash });
   }
   return { ...a, disputed: out };
+}
+
+/**
+ * True when an F report rests only on probes that got no answer: graders before
+ * the "incomplete" verdict read a failed call as "answers carry no usage numbers".
+ * Such a grade has no evidence about the model or the bill, unlike a token count
+ * mismatch, scaled usage, a TEE contradiction or a rejected claim.
+ */
+export function fRestsOnOutage(report) {
+  const d = report?.decision;
+  if (!d || d.tier !== "F" || report.claims_audit) return false;
+  if (report.attestation?.verdict === "contradicts" || report.calls?.error_pct > 50) return false;
+  const fp = report.fingerprint || {};
+  if (fp.verdict === "incomplete") return true;
+  if (fp.verdict !== "missing_usage") return false;
+  // Every probe that did answer carried usage, so the only gaps are calls that failed.
+  const probes = (report.calls?.detail || []).filter((c) => c.kind === "fingerprint");
+  return probes.some((c) => !c.ok) && probes.filter((c) => c.ok).every((c) => typeof c.usage?.prompt_tokens === "number");
 }
 
 /**
